@@ -127,3 +127,13 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Custom ignores
+# Data
+data/
+
+# pycharm
+.idea
+
+# pickled files
+.pkl
