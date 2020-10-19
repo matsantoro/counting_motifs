@@ -87,9 +87,10 @@ def save_er_graph(path: Path, n_nodes: int, density: float):
         )
 
 
-def load_sparse_matrix(path: Path):
+def load_sparse_matrix_from_pkl(path: Path):
     with open(path, 'rb') as file:
         dictionary = pickle.load(file)
         return sp.csr_matrix((dictionary['data'],
                              dictionary['indices'],
                              dictionary['indptr']))
+

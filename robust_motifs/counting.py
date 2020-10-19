@@ -139,7 +139,6 @@ def get_element_targets(data: Tuple[List, Dict]):
                          dtype=arrays['indptr']['type'],
                          buffer=sm_indptr.buf)
     matrix = sp.csr_matrix((sdata, sindices, sindptr))
-
     return matrix[element].multiply(matrix.T[element]).nonzero()[1]
 
 

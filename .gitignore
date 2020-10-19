@@ -132,8 +132,15 @@ dmypy.json
 # Data
 data/
 
+# Drafts
+drafts/
+draft/
+
 # pycharm
 .idea
 
 # pickled files
 .pkl
+
+# visual studio code
+.vscode
