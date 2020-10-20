@@ -1,4 +1,5 @@
 import h5py
+import os
 from pathlib import Path
 import pandas as pd
 import pickle
@@ -66,7 +67,11 @@ def save_er_graph(path: Path, n_nodes: int, density: float):
 
     :argument path: (Path) path of flagser file to be written.
     :argument n_nodes: (int) number of nodes of the graph.
-    :argument density: (float) graph edge density."""
+    :argument density: (float) graph edge density.
+
+    :returns flag_path: (Path) flagser file path.
+    :returns pickle_path: (Path) pickle file path.
+    """
     g = networkx.fast_gnp_random_graph(n_nodes, density, directed=True)
     a = networkx.adjacency_matrix(g)
     with open(path, "w") as f:
@@ -86,8 +91,34 @@ def save_er_graph(path: Path, n_nodes: int, density: float):
             file
         )
 
+    return path, path.with_suffix(".pkl")
+
+
+def save_count_er_graph(path: Path, n_nodes: int, density: float):
+    """Saves the ER graph as a flagser-readable file, and pickle-dumps
+    the adjacency matrix. Creates the
+
+    :argument path: (Path) path of flagser file to be written.
+    :argument n_nodes: (int) number of nodes of the graph.
+    :argument density: (float) graph edge density.
+
+    :returns flag_path: (Path) flagser file path.
+    :returns pickle_path: (Path) pickle file path.
+    :returns count_path: (Path) flagser-count h5 file path.
+    """
+    path, pickle_path = save_er_graph(path, n_nodes, density)
+    count_path = path.parent / Path(path.stem + "-count.h5")
+    count_path.unlink(missing_ok=True)
+    os.system("flagser-count " + str(path) + " --out " + str(count_path))
+    return path, pickle_path, count_path
+
 
 def load_sparse_matrix_from_pkl(path: Path):
+    """Loads a sparse matrix from a pickle file.
+
+    :argument path: (Path) path of the pickle file to be loaded.
+
+    :returns matrix: (sp.csr_matrix) Loaded sparse matrix."""
     with open(path, 'rb') as file:
         dictionary = pickle.load(file)
         return sp.csr_matrix((dictionary['data'],

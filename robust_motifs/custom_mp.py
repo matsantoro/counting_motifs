@@ -4,28 +4,6 @@ import scipy.sparse as sp
 from typing import Dict
 
 
-# Unfortunately, I can't wrap functions with multiprocessing.
-# Wrapped functions can't be pickled for some reason.
-def sm_wrapper(func, arrays):
-    def sm_func(*args, **kwargs):
-        sm_data = SharedMemory(name=arrays['data']['name'])
-        sm_indices = SharedMemory(name=arrays['indices']['name'])
-        sm_indptr = SharedMemory(name=arrays['indptr']['name'])
-        sdata = np.ndarray((int(arrays['data']['size']/arrays['data']['factor']),),
-                           dtype=arrays['data']['type'],
-                           buffer=sm_data.buf)
-        sindices = np.ndarray((int(arrays['indices']['size']/arrays['indices']['factor']),),
-                            dtype=arrays['indices']['type'],
-                            buffer=sm_indices.buf)
-        sindptr = np.ndarray((int(arrays['indptr']['size']/arrays['indptr']['factor']),),
-                            dtype=arrays['indptr']['type'],
-                            buffer=sm_indptr.buf)
-        kwargs.update({"matrix": sp.csr_matrix((sdata, sindices, sindptr))})
-        return func(*args, **kwargs)
-
-    return sm_func
-
-
 def prepare_shared_memory(matrix: sp.csr_matrix, prefix: str) -> Dict:
     """Function that prepares shared memory for sparse matrix.
 
@@ -65,6 +43,13 @@ def prepare_shared_memory(matrix: sp.csr_matrix, prefix: str) -> Dict:
 
 
 def share_dense_matrix(matrix: np.ndarray):
+    """Add a dense matrix in a shared memory block.
+
+    :argument matrix: (np.ndarray) dense matrix to be shared.
+
+    :returns array: (dictionary) array_info to access shared memory.
+    :returns links: (List) shared memory objects for unlinking.
+    """
     memory_block = SharedMemory(create=True, size=matrix.nbytes)
     array_pointer = np.ndarray(matrix.shape, dtype=matrix.dtype, buffer=memory_block.buf)
     array_pointer[:] = matrix

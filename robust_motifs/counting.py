@@ -5,6 +5,7 @@ import scipy.sparse as sp
 from typing import Dict, List, Optional, Tuple
 
 
+# Currently unused.
 def is_acyclic_simplex(data: Tuple[List[int], Dict]) -> bool:
     """Function that returns whether a given subset of neurons gives rise to
     an acyclic subgraph.
@@ -38,6 +39,7 @@ def is_acyclic_simplex(data: Tuple[List[int], Dict]) -> bool:
         return False
 
 
+# Currently unused.
 def has_dag2_extension(data: Tuple[List[int], Dict]) -> List[np.ndarray]:
     """Function that returns all dag2 subgraph extensions of a given simplex.
 
@@ -74,6 +76,7 @@ def has_dag2_extension(data: Tuple[List[int], Dict]) -> List[np.ndarray]:
     return dags2
 
 
+# Currently unused, does not take into account the fact that a node can be internal.
 def get_dag2_signature(data: Tuple[List, Dict]):
     """Function that returns the dag2 signature of all extensions of a simplex (if any).
 
@@ -113,7 +116,7 @@ def get_dag2_signature(data: Tuple[List, Dict]):
     return dags2
 
 
-def get_element_targets(data: Tuple[List, Dict]):
+def get_bidirectional_targets(data: Tuple[List, Dict]):
     """Function that returns the bidirectional targets of the last nodes of a simplex (if any).
 
         :argument data: (tuple[List, Dict]) data to check acyclicity on.
@@ -123,7 +126,7 @@ def get_element_targets(data: Tuple[List, Dict]):
             the shared memory location of the full matrix.
 
         :returns dags2: (Optional[List[Tuple]]) signature of the dag2 graph.
-        """
+    """
     element = data[0]
     arrays = data[1]
     sm_data = SharedMemory(name=arrays['data']['name'])
@@ -142,6 +145,7 @@ def get_element_targets(data: Tuple[List, Dict]):
     return matrix[element].multiply(matrix.T[element]).nonzero()[1]
 
 
+# Unused
 def check_base(base, simplex_dictionary, targets):
     for target in targets:
         for simplex in simplex_dictionary.get(target, []):
@@ -149,6 +153,7 @@ def check_base(base, simplex_dictionary, targets):
                 yield simplex
 
 
+# Unused
 def get_bisimplices(lists):
     list1 = lists[0]
     list2 = lists[1]
@@ -156,3 +161,59 @@ def get_bisimplices(lists):
         for simplex2 in list2:
             if np.all(simplex1[:-1] == simplex2[:-1]):
                 yield (simplex1, simplex2)
+
+
+def retrieve_sparse_shared_matrix(matrix_info):
+    # Doesn't seem to work because pickling.
+    sm_data = SharedMemory(name=matrix_info['data']['name'])
+    sm_indices = SharedMemory(name=matrix_info['indices']['name'])
+    sm_indptr = SharedMemory(name=matrix_info['indptr']['name'])
+    sdata = np.ndarray((int(matrix_info['data']['size'] / matrix_info['data']['factor']),),
+                       dtype=matrix_info['data']['type'],
+                       buffer=sm_data.buf)
+    sindices = np.ndarray((int(matrix_info['indices']['size'] / matrix_info['indices']['factor']),),
+                          dtype=matrix_info['indices']['type'],
+                          buffer=sm_indices.buf)
+    sindptr = np.ndarray((int(matrix_info['indptr']['size'] / matrix_info['indptr']['factor']),),
+                         dtype=matrix_info['indptr']['type'],
+                         buffer=sm_indptr.buf)
+    return sp.csr_matrix((sdata, sindices, sindptr))
+
+
+def get_n_extended_simplices(mp_element):
+    simplex = mp_element[0]
+    full_matrix_info = mp_element[1]
+    bidirectional_matrix_info = mp_element[2]
+
+    sm_data = SharedMemory(name=full_matrix_info['data']['name'])
+    sm_indices = SharedMemory(name=full_matrix_info['indices']['name'])
+    sm_indptr = SharedMemory(name=full_matrix_info['indptr']['name'])
+    sdata = np.ndarray((int(full_matrix_info['data']['size'] / full_matrix_info['data']['factor']),),
+                       dtype=full_matrix_info['data']['type'],
+                       buffer=sm_data.buf)
+    sindices = np.ndarray((int(full_matrix_info['indices']['size'] / full_matrix_info['indices']['factor']),),
+                          dtype=full_matrix_info['indices']['type'],
+                          buffer=sm_indices.buf)
+    sindptr = np.ndarray((int(full_matrix_info['indptr']['size'] / full_matrix_info['indptr']['factor']),),
+                         dtype=full_matrix_info['indptr']['type'],
+                         buffer=sm_indptr.buf)
+
+    full_matrix = sp.csr_matrix((sdata, sindices, sindptr))
+
+    sm_data = SharedMemory(name=bidirectional_matrix_info['data']['name'])
+    sm_indices = SharedMemory(name=bidirectional_matrix_info['indices']['name'])
+    sm_indptr = SharedMemory(name=bidirectional_matrix_info['indptr']['name'])
+    sdata = np.ndarray((int(bidirectional_matrix_info['data']['size'] / bidirectional_matrix_info['data']['factor']),),
+                       dtype=bidirectional_matrix_info['data']['type'],
+                       buffer=sm_data.buf)
+    sindices = np.ndarray((int(bidirectional_matrix_info['indices']['size'] / bidirectional_matrix_info['indices']['factor']),),
+                          dtype=bidirectional_matrix_info['indices']['type'],
+                          buffer=sm_indices.buf)
+    sindptr = np.ndarray((int(bidirectional_matrix_info['indptr']['size'] / bidirectional_matrix_info['indptr']['factor']),),
+                         dtype=bidirectional_matrix_info['indptr']['type'],
+                         buffer=sm_indptr.buf)
+
+    bid_matrix = sp.csr_matrix((sdata, sindices, sindptr))
+
+    return len(set(bid_matrix[simplex[-1]].nonzero()[1]) - set(simplex[:-1])), len(bid_matrix[simplex[-1]].nonzero()[1])
+
