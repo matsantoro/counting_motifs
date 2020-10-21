@@ -4,6 +4,8 @@ import numpy as np
 import scipy.sparse as sp
 from typing import Dict, List, Optional, Tuple
 
+import time
+
 
 # Currently unused.
 def is_acyclic_simplex(data: Tuple[List[int], Dict]) -> bool:
@@ -214,6 +216,55 @@ def get_n_extended_simplices(mp_element):
                          buffer=sm_indptr.buf)
 
     bid_matrix = sp.csr_matrix((sdata, sindices, sindptr))
-
+    print(bid_matrix[simplex[-1]].nonzero()[1])
     return len(set(bid_matrix[simplex[-1]].nonzero()[1]) - set(simplex[:-1])), len(bid_matrix[simplex[-1]].nonzero()[1])
+
+
+def get_bisimplices(mp_element):
+    simplex = mp_element[0]
+    full_matrix_info = mp_element[1]
+    bidirectional_matrix_info = mp_element[2]
+
+    sm_data_1 = SharedMemory(name=full_matrix_info['data']['name'])
+    sm_indices_1 = SharedMemory(name=full_matrix_info['indices']['name'])
+    sm_indptr_1 = SharedMemory(name=full_matrix_info['indptr']['name'])
+    sdata = np.ndarray((int(full_matrix_info['data']['size'] / full_matrix_info['data']['factor']),),
+                       dtype=full_matrix_info['data']['type'],
+                       buffer=sm_data_1.buf)
+    sindices = np.ndarray((int(full_matrix_info['indices']['size'] / full_matrix_info['indices']['factor']),),
+                          dtype=full_matrix_info['indices']['type'],
+                          buffer=sm_indices_1.buf)
+    sindptr = np.ndarray((int(full_matrix_info['indptr']['size'] / full_matrix_info['indptr']['factor']),),
+                         dtype=full_matrix_info['indptr']['type'],
+                         buffer=sm_indptr_1.buf)
+
+    full_matrix = sp.csr_matrix((sdata, sindices, sindptr))
+
+    sm_data_2 = SharedMemory(name=bidirectional_matrix_info['data']['name'])
+    sm_indices_2 = SharedMemory(name=bidirectional_matrix_info['indices']['name'])
+    sm_indptr_2 = SharedMemory(name=bidirectional_matrix_info['indptr']['name'])
+    sdata = np.ndarray((int(bidirectional_matrix_info['data']['size'] / bidirectional_matrix_info['data']['factor']),),
+                       dtype=bidirectional_matrix_info['data']['type'],
+                       buffer=sm_data_2.buf)
+    sindices = np.ndarray((int(bidirectional_matrix_info['indices']['size'] / bidirectional_matrix_info['indices']['factor']),),
+                          dtype=bidirectional_matrix_info['indices']['type'],
+                          buffer=sm_indices_2.buf)
+    sindptr = np.ndarray((int(bidirectional_matrix_info['indptr']['size'] / bidirectional_matrix_info['indptr']['factor']),),
+                         dtype=bidirectional_matrix_info['indptr']['type'],
+                         buffer=sm_indptr_2.buf)
+
+    bid_matrix = sp.csr_matrix((sdata, sindices, sindptr))
+    bisimplices = []
+
+    for elem in (set(bid_matrix[simplex[-1]].nonzero()[1]).difference(set(simplex[:-1]))):
+        f = True
+        signature = full_matrix[simplex[:-1]].T[elem].T
+        for flag in signature:
+            if not flag:
+                f = False
+                break
+        if f:
+            bisimplices.append(tuple(sorted([simplex[-1], elem])))
+    return bisimplices
+
 
