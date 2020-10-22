@@ -147,24 +147,6 @@ def get_bidirectional_targets(data: Tuple[List, Dict]):
     return matrix[element].multiply(matrix.T[element]).nonzero()[1]
 
 
-# Unused
-def check_base(base, simplex_dictionary, targets):
-    for target in targets:
-        for simplex in simplex_dictionary.get(target, []):
-            if np.all(np.array(base) == np.array(simplex[:-1])):
-                yield simplex
-
-
-# Unused
-def get_bisimplices(lists):
-    list1 = lists[0]
-    list2 = lists[1]
-    for simplex1 in list1:
-        for simplex2 in list2:
-            if np.all(simplex1[:-1] == simplex2[:-1]):
-                yield (simplex1, simplex2)
-
-
 def retrieve_sparse_shared_matrix(matrix_info):
     # Doesn't seem to work because pickling.
     sm_data = SharedMemory(name=matrix_info['data']['name'])
@@ -216,7 +198,6 @@ def get_n_extended_simplices(mp_element):
                          buffer=sm_indptr.buf)
 
     bid_matrix = sp.csr_matrix((sdata, sindices, sindptr))
-    print(bid_matrix[simplex[-1]].nonzero()[1])
     return len(set(bid_matrix[simplex[-1]].nonzero()[1]) - set(simplex[:-1])), len(bid_matrix[simplex[-1]].nonzero()[1])
 
 

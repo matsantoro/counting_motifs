@@ -61,6 +61,22 @@ def import_connectivity_matrix(path: Path = Path('data/test/cons_locs_pathways_m
         return df
 
 
+def write_flagser_file(path: Path, matrix: sp.csr_matrix):
+    """Writes a matrix as a flagser file.
+    :argument path: flagser file path.
+    :argument matrix: sparse matrix.
+    """
+    n_nodes = matrix.shape[0]
+    with open(path, "w") as f:
+        f.write("dim 0\n")
+        for _ in tqdm(range(n_nodes)):
+            f.write("0 ")
+        f.write("\n")
+        f.write("dim 1\n")
+        for row, col in tqdm(zip(*matrix.nonzero())):
+            f.write(str(row) + " " + str(col) + "\n")
+
+
 def save_er_graph(path: Path, n_nodes: int, density: float):
     """Saves the ER graph as a flagser-readable file, and pickle-dumps
     the adjacency matrix.
@@ -74,22 +90,10 @@ def save_er_graph(path: Path, n_nodes: int, density: float):
     """
     g = networkx.fast_gnp_random_graph(n_nodes, density, directed=True)
     a = networkx.adjacency_matrix(g)
-    with open(path, "w") as f:
-        f.write("dim 0\n")
-        for _ in tqdm(range(n_nodes)):
-            f.write("0 ")
-        f.write("\n")
-        f.write("dim 1\n")
-        for row, col in tqdm(zip(*a.nonzero())):
-            f.write(str(row) + " " + str(col) + "\n")
 
-    with open(path.with_suffix(".pkl"), "wb") as file:
-        pickle.dump(
-            {'data': a.data,
-             'indices': a.indices,
-             'indptr': a.indptr},
-            file
-        )
+    write_flagser_file(path, a)
+
+    save_sparse_matrix_to_pkl(path.with_suffix(".pkl"), a)
 
     return path, path.with_suffix(".pkl")
 
@@ -108,8 +112,8 @@ def save_count_er_graph(path: Path, n_nodes: int, density: float):
     """
     path, pickle_path = save_er_graph(path, n_nodes, density)
     count_path = path.parent / Path(path.stem + "-count.h5")
-    count_path.unlink(missing_ok=True)
-    os.system("flagser-count " + str(path) + " --out " + str(count_path))
+    flagser_count(path, count_path)
+
     return path, pickle_path, count_path
 
 
@@ -125,3 +129,18 @@ def load_sparse_matrix_from_pkl(path: Path):
                              dictionary['indices'],
                              dictionary['indptr']))
 
+
+def save_sparse_matrix_to_pkl(path: Path, matrix: sp.csr_matrix):
+    with open(path, "wb") as file:
+        pickle.dump(
+            {'data': matrix.data,
+             'indices': matrix.indices,
+             'indptr': matrix.indptr},
+            file
+        )
+
+
+def flagser_count(in_path: Path, out_path: Path, overwrite: bool = True):
+    if overwrite:
+        out_path.unlink(missing_ok=True)
+    os.system("flagser-count " + str(in_path) + " --out " + str(out_path))
