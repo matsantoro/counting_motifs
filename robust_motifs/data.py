@@ -9,11 +9,14 @@ from tqdm import tqdm
 from typing import List, Optional, Union
 import scipy.sparse as sp
 
+from .utilities import build_triu_matrix
+
 
 def import_connectivity_matrix(path: Path = Path('data/test/cons_locs_pathways_mc0_Column.h5'),
                         zones: Optional[List[str]] = None,
                         dataframe: bool = True,
-                        type: Optional[str] = None) -> Union[np.ndarray, pd.DataFrame]:
+                        type: Optional[str] = None,
+                        pathway_shuffle: bool = False) -> Union[np.ndarray, pd.DataFrame]:
     """Imports the connectivity matrix of the BBP model.
 
     :argument path: (Path) Path to load the data from.
@@ -21,8 +24,9 @@ def import_connectivity_matrix(path: Path = Path('data/test/cons_locs_pathways_m
     :parameter dataframe: (bool) Whether to return the matrix in dataframe form.
     :parameter type: (Optional[str]) Sparse matrix format to return. Either 'coo',
         'csr' or 'csc'.
+    :parameter pathway_shuffle: (bool) whether to shuffle connections pathway-wise.
 
-    :returns matix: (Union[np.ndarray, pd.DataFrame]) Connectivity matrix.
+    :returns matrix: (Union[np.ndarray, pd.DataFrame]) Connectivity matrix.
     """
     file = h5py.File(path, 'r')
     if zones is None:
@@ -31,9 +35,17 @@ def import_connectivity_matrix(path: Path = Path('data/test/cons_locs_pathways_m
     n_elements = []
     for element1 in tqdm(zones):
         conn_row = sp.csr_matrix(file['connectivity'][element1][zones[0]]['cMat'][:, :], dtype=bool)
+
+        if pathway_shuffle:
+            conn_row = matrix_shuffle(conn_row, exclude_diagonal=(element1 is zones[0]))
+
         n_elements += [conn_row.shape[0]]
         for element2 in zones[1:]:
             block = sp.csr_matrix(file['connectivity'][element1][element2]['cMat'][:, :], dtype=bool)
+
+            if pathway_shuffle:
+                block = matrix_shuffle(block, exclude_diagonal=(element1 is element2))
+
             conn_row = sp.hstack([conn_row, block])
         try:
             matrix = sp.vstack([matrix, conn_row])
@@ -59,6 +71,33 @@ def import_connectivity_matrix(path: Path = Path('data/test/cons_locs_pathways_m
         df.columns = [index1, index2]
         df.index = [index1, index2]
         return df
+
+
+def matrix_shuffle(matrix: sp.csr_matrix, exclude_diagonal=False):
+    """Returns shuffled version of a matrix, with care not to put elements on the diagonal.
+    """
+    if exclude_diagonal:
+        assert matrix.shape[0] == matrix.shape[1]
+        # squash matrix before shuffling
+        upper_matrix = sp.triu(matrix, 1, 'csc')
+        lower_matrix = sp.tril(matrix, -1, 'csr')
+        upper_matrix.indices += 1
+        upper_matrix = upper_matrix.tocsr()
+        _matrix = (lower_matrix + upper_matrix)[1:]
+    else:
+        _matrix = matrix
+    shuffled_row_indices = np.random.permutation(np.arange(_matrix.shape[0]))
+    shuffled_col_indices = np.random.permutation(np.arange(_matrix.shape[1]))
+    _matrix = _matrix[shuffled_row_indices].T[shuffled_col_indices].T
+    if exclude_diagonal:
+        lower_matrix = sp.tril(_matrix, 0, 'csr')
+        aux = sp.csr_matrix(np.zeros((1, lower_matrix.shape[1])).astype(bool))
+        lower_matrix = sp.vstack([aux, lower_matrix])
+        lower_matrix = lower_matrix.tocsr()
+        upper_matrix = sp.triu(_matrix, 1, 'csr')
+        upper_matrix = sp.vstack([upper_matrix, aux])
+        _matrix = lower_matrix + upper_matrix
+    return _matrix
 
 
 def write_flagser_file(path: Path, matrix: sp.csr_matrix):
