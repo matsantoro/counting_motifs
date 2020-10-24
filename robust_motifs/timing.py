@@ -4,6 +4,7 @@ import networkx
 import multiprocessing as mp
 import numpy as np
 from pathlib import Path
+import sys
 from typing import Callable, Optional
 import time
 from tqdm import tqdm
@@ -13,7 +14,8 @@ from .data import (
     flagser_count
 )
 from .custom_mp import prepare_shared_memory
-from .counting import get_n_extended_simplices
+from .counting import get_n_extended_simplices, get_bisimplices
+
 
 class Timer:
     def __init__(self,
@@ -80,6 +82,7 @@ class Timer:
         self._prepare_multiprocessing(cores_count)
         timings = []
         prep_timings = []
+        mem_usages = []
         for _ in range(n_iterations):
 
             pre_start = time.time()
@@ -98,13 +101,18 @@ class Timer:
             start = time.time()
             # Unfortunately, you can't pass the function to be timed as an argument. You need to
             # rewrite this part.
-            r = self.pool.imap(get_n_extended_simplices, mp_iterator)  # call to have things run
-            [_ for _ in r]
+            r = self.pool.imap(get_bisimplices, mp_iterator)  # call to have things run
+            l1 = set()
+            for elem in r:
+                l1 = l1.union(set(elem))
             # stop rewriting here.
+            print(l1)
             end = time.time()
 
             timings.append(end-start)
             prep_timings.append(start - pre_start)
+            # manually compute memory usage here
+            mem_usages.append(sys.getsizeof(l1))
         self._shutdown()
 
-        return timings, prep_timings
+        return timings, prep_timings, mem_usages

@@ -148,7 +148,7 @@ def get_bidirectional_targets(data: Tuple[List, Dict]):
 
 
 def retrieve_sparse_shared_matrix(matrix_info):
-    # Doesn't seem to work because pickling.
+    # Doesn't seem to work because pickling or pass by reference?
     sm_data = SharedMemory(name=matrix_info['data']['name'])
     sm_indices = SharedMemory(name=matrix_info['indices']['name'])
     sm_indptr = SharedMemory(name=matrix_info['indptr']['name'])
@@ -245,7 +245,7 @@ def get_bisimplices(mp_element):
                 f = False
                 break
         if f:
-            bisimplices.append(tuple(sorted([simplex[-1], elem])))
+            bisimplices.append(tuple(simplex[:-1].tolist() + sorted([simplex[-1], elem])))
     return bisimplices
 
 
