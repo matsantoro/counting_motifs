@@ -154,6 +154,15 @@ def save_count_er_graph(path: Path, n_nodes: int, density: float):
     return path, pickle_path, count_path
 
 
+def save_count_graph_from_matrix(path: Path, matrix: sp.csr_matrix):
+    pickle_path = path.with_suffix(".pkl")
+    count_path = path.parent / Path(path.stem + "-count.h5")
+    write_flagser_file(path, matrix)
+    save_sparse_matrix_to_pkl(pickle_path, matrix)
+    flagser_count(path, count_path)
+    return path, pickle_path, count_path
+
+
 def load_sparse_matrix_from_pkl(path: Path):
     """Loads a sparse matrix from a pickle file.
 
