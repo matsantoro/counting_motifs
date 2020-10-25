@@ -9,8 +9,6 @@ from tqdm import tqdm
 from typing import List, Optional, Union
 import scipy.sparse as sp
 
-from .utilities import build_triu_matrix
-
 
 def import_connectivity_matrix(path: Path = Path('data/test/cons_locs_pathways_mc0_Column.h5'),
                         zones: Optional[List[str]] = None,
@@ -86,9 +84,9 @@ def matrix_shuffle(matrix: sp.csr_matrix, exclude_diagonal=False):
         _matrix = (lower_matrix + upper_matrix)[1:]
     else:
         _matrix = matrix
-    shuffled_row_indices = np.random.permutation(np.arange(_matrix.shape[0]))
-    shuffled_col_indices = np.random.permutation(np.arange(_matrix.shape[1]))
-    _matrix = _matrix[shuffled_row_indices].T[shuffled_col_indices].T
+    buffer = np.array(_matrix.todense()).flatten()
+    np.random.shuffle(buffer)
+    _matrix = sp.csr_matrix(buffer.reshape(_matrix.shape))
     if exclude_diagonal:
         lower_matrix = sp.tril(_matrix, 0, 'csr')
         aux = sp.csr_matrix(np.zeros((1, lower_matrix.shape[1])).astype(bool))
@@ -183,3 +181,31 @@ def flagser_count(in_path: Path, out_path: Path, overwrite: bool = True):
     if overwrite:
         out_path.unlink(missing_ok=True)
     os.system("flagser-count " + str(in_path) + " --out " + str(out_path))
+
+
+def adjust_bidirectional_edges(matrix: sp.csr_matrix, target: int):
+    b_matrix = matrix.multiply(matrix.T)
+    b_edges = int(b_matrix.count_nonzero()/2)
+    d_matrix = matrix - b_matrix
+
+    selection = np.random.choice(d_matrix.count_nonzero(), target - b_edges, replace=False)
+    selection = np.array(list(zip(*d_matrix.nonzero())))[selection]
+
+    for elem in tqdm(selection, desc='Removing edges...'):
+        matrix[elem[0], elem[1]] = False
+        d_matrix[elem[0], elem[1]] = False
+
+    d_matrix.eliminate_zeros()
+
+    selection = np.random.choice(d_matrix.count_nonzero(), target - b_edges, replace=False)
+    selection = np.array(list(zip(*d_matrix.nonzero())))[selection]
+
+    matrix = matrix.tolil()
+
+    for elem in tqdm(selection, desc='Adding bidirectional edges...'):
+        matrix[elem[1], elem[0]] = True
+
+    matrix = matrix.tocsr()
+    matrix.eliminate_zeros()
+    return matrix
+
