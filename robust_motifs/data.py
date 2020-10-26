@@ -196,12 +196,13 @@ def adjust_bidirectional_edges(matrix: sp.csr_matrix, target: int):
     b_matrix = matrix.multiply(matrix.T)
     b_edges = int(b_matrix.count_nonzero()/2)
     d_matrix = matrix - b_matrix
+    _matrix = matrix.copy()
 
     selection = np.random.choice(d_matrix.count_nonzero(), target - b_edges, replace=False)
     selection = np.array(list(zip(*d_matrix.nonzero())))[selection]
 
     for elem in tqdm(selection, desc='Removing edges...'):
-        matrix[elem[0], elem[1]] = False
+        _matrix[elem[0], elem[1]] = False
         d_matrix[elem[0], elem[1]] = False
 
     d_matrix.eliminate_zeros()
@@ -209,12 +210,12 @@ def adjust_bidirectional_edges(matrix: sp.csr_matrix, target: int):
     selection = np.random.choice(d_matrix.count_nonzero(), target - b_edges, replace=False)
     selection = np.array(list(zip(*d_matrix.nonzero())))[selection]
 
-    matrix = matrix.tolil()
+    _matrix = _matrix.tolil()
 
     for elem in tqdm(selection, desc='Adding bidirectional edges...'):
-        matrix[elem[1], elem[0]] = True
+        _matrix[elem[1], elem[0]] = True
 
-    matrix = matrix.tocsr()
-    matrix.eliminate_zeros()
-    return matrix
+    _matrix = _matrix.tocsr()
+    _matrix.eliminate_zeros()
+    return _matrix
 
