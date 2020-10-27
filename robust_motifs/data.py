@@ -71,32 +71,54 @@ def import_connectivity_matrix(path: Path = Path('data/test/cons_locs_pathways_m
         return df
 
 
-def matrix_shuffle(matrix: sp.csr_matrix, exclude_diagonal=False):
+def matrix_shuffle(matrix: Union[sp.csr_matrix, np.ndarray], exclude_diagonal:bool = False, sparse: bool = True):
     """Returns shuffled version of a matrix, with care not to put elements on the diagonal.
     """
-    if exclude_diagonal:
-        assert matrix.shape[0] == matrix.shape[1]
-        # squash matrix before shuffling
-        upper_matrix = sp.triu(matrix, 1, 'csc')
-        lower_matrix = sp.tril(matrix, -1, 'csr')
-        upper_matrix.indices += 1
-        upper_matrix = upper_matrix.tocsr()
-        _matrix = (lower_matrix + upper_matrix)[1:]
-    else:
-        _matrix = matrix
-    buffer = np.array(_matrix.todense()).flatten()
-    np.random.shuffle(buffer)
-    _matrix = sp.csr_matrix(buffer.reshape(_matrix.shape))
-    if exclude_diagonal:
-        lower_matrix = sp.tril(_matrix, 0, 'csr')
-        aux = sp.csr_matrix(np.zeros((1, lower_matrix.shape[1])).astype(bool))
-        lower_matrix = sp.vstack([aux, lower_matrix])
-        lower_matrix = lower_matrix.tocsr()
-        upper_matrix = sp.triu(_matrix, 1, 'csr')
-        upper_matrix = sp.vstack([upper_matrix, aux])
-        _matrix = lower_matrix + upper_matrix
-    return _matrix
+    if sparse:
+        if exclude_diagonal:
+            assert matrix.shape[0] == matrix.shape[1]
+            # squash matrix before shuffling
+            upper_matrix = sp.triu(matrix, 1, 'csc')
+            lower_matrix = sp.tril(matrix, -1, 'csr')
+            upper_matrix.indices += 1
+            upper_matrix = upper_matrix.tocsr()
+            _matrix = (lower_matrix + upper_matrix)[1:]
+        else:
+            _matrix = matrix
+        buffer = np.array(_matrix.todense()).flatten()
+        np.random.shuffle(buffer)
+        _matrix = sp.csr_matrix(buffer.reshape(_matrix.shape))
+        if exclude_diagonal:
+            lower_matrix = sp.tril(_matrix, 0, 'csr')
+            aux = sp.csr_matrix(np.zeros((1, lower_matrix.shape[1])).astype(bool))
+            lower_matrix = sp.vstack([aux, lower_matrix])
+            lower_matrix = lower_matrix.tocsr()
+            upper_matrix = sp.triu(_matrix, 1, 'csr')
+            upper_matrix = sp.vstack([upper_matrix, aux])
+            _matrix = lower_matrix + upper_matrix
+        return _matrix
 
+    else:
+        if exclude_diagonal:
+            assert matrix.shape[0] == matrix.shape[1]
+            # squash matrix before shuffling
+            upper_matrix = np.triu(matrix)
+            lower_matrix = np.tril(matrix)
+            upper_matrix = np.vstack([np.zeros((1, matrix.shape[0]), dtype=bool), upper_matrix])[:-1]
+            _matrix = (lower_matrix + upper_matrix)[1:]
+        else:
+            _matrix = matrix
+        buffer = _matrix.flatten()
+        np.random.shuffle(buffer)
+        _matrix = buffer.reshape(_matrix.shape)
+        if exclude_diagonal:
+            lower_matrix = np.tril(_matrix, 0)
+            upper_matrix = np.triu(_matrix, 1)
+            aux = np.zeros((1, _matrix.shape[1]), dtype=bool)
+            lower_matrix = np.vstack([aux, lower_matrix])
+            upper_matrix = np.vstack([upper_matrix, aux])
+            _matrix = lower_matrix + upper_matrix
+        return _matrix
 
 def write_flagser_file(path: Path, matrix: sp.csr_matrix):
     """Writes a matrix as a flagser file.
@@ -218,4 +240,37 @@ def adjust_bidirectional_edges(matrix: sp.csr_matrix, target: int):
     _matrix = _matrix.tocsr()
     _matrix.eliminate_zeros()
     return _matrix
+
+
+def load_bbp_matrix_format(path: Path, shuffle_type: str = None):
+    # to load the data
+    mat = np.load(str(path))
+    neuron_data = pd.read_pickle(path.with_name(path.stem.replace("matrix", "neuron_data")))
+
+    if shuffle_type == "all":
+        mat = matrix_shuffle(mat, exclude_diagonal=True, sparse=False)
+
+    elif shuffle_type == "pathway":
+        available_pops = neuron_data.mtype.unique()
+        d = {}
+        for pop in available_pops:
+            d[pop] = retrieve_indices(pop, neuron_data)
+        for pop1 in tqdm(available_pops):
+            for pop2 in available_pops:
+                temp_mat = matrix_shuffle(
+                    mat[d[pop1]][:, d[pop2]],
+                    exclude_diagonal=(pop1 == pop2),
+                    sparse=False
+                )
+                for i1, elem1 in enumerate(d[pop1]):
+                    for i2, elem2 in enumerate(d[pop2]):
+                        mat[elem1, elem2] = temp_mat[i1, i2]
+    return sp.csr_matrix(mat)
+
+
+def retrieve_indices(pop, neuron_data):
+    shift = neuron_data.index.values[0]  # this is the gid of the first neuron we should shift by them
+    return neuron_data.query("mtype=='"+pop+"'").index.values - shift
+
+
 
