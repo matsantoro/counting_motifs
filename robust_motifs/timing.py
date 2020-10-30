@@ -14,7 +14,7 @@ from .data import (
     flagser_count
 )
 from .custom_mp import prepare_shared_memory
-from .counting import get_n_extended_simplices, get_bisimplices
+from .counting import get_n_extended_simplices, get_bisimplices, get_extended_simplices_with_signature
 
 
 class Timer:
@@ -44,7 +44,8 @@ class Timer:
         if not self._flagser_path.exists() or overwrite:
             write_flagser_file(self._flagser_path, self._matrix)
         # Flagser count
-        flagser_count(self._flagser_path, self._count_path, overwrite=overwrite)
+        if not self._count_path.exists() or overwrite:
+            flagser_count(self._flagser_path, self._count_path, overwrite=overwrite)
 
         self._count_file = h5py.File(self._count_path, 'r')
 
@@ -101,18 +102,33 @@ class Timer:
             start = time.time()
             # Unfortunately, you can't pass the function to be timed as an argument. You need to
             # rewrite this part.
-            r = self.pool.imap(get_bisimplices, mp_iterator)  # call to have things run
-            l1 = set()
+            ########## bisimplices ######################
+            # r = self.pool.imap(get_bisimplices, mp_iterator)  # call to have things run
+            # l1 = set()
+            # for elem in r:
+            #    l1 = l1.union(set(elem))
+            ######### extended simplices ##################
+            # r = self.pool.imap(get_n_extended_simplices, mp_iterator)
+            # [_ for _ in r]
+            ######### extended simplices + signatures ####
+            r = self.pool.imap(get_extended_simplices_with_signature, mp_iterator)
+            motifs = []
+            signatures = []
             for elem in r:
-                l1 = l1.union(set(elem))
+                motifs.extend(elem[0])
+                signatures.extend(elem[1])
             # stop rewriting here.
-            print(l1)
             end = time.time()
 
             timings.append(end-start)
             prep_timings.append(start - pre_start)
             # manually compute memory usage here
-            mem_usages.append(sys.getsizeof(l1))
+            ########## bisimplices #######################
+            #mem_usages.append(sys.getsizeof(l1))
+            ########## extended simplices ################
+            #mem_usages.append(0)
+            ########## extended simplices + signatures ###
+            mem_usages.append(sys.getsizeof(motifs) + sys.getsizeof(signatures))
         self._shutdown()
 
         return timings, prep_timings, mem_usages
