@@ -1,4 +1,5 @@
 import h5py
+from itertools import product
 import os
 import numpy as np
 import networkx
@@ -8,6 +9,8 @@ import pickle
 from tqdm import tqdm
 from typing import List, Optional, Union
 import scipy.sparse as sp
+
+from .custom_mp import prepare_shared_memory
 
 
 def import_connectivity_matrix(path: Path = Path('data/test/cons_locs_pathways_mc0_Column.h5'),
@@ -329,4 +332,85 @@ def retrieve_indices(pop: str, neuron_data: pd.DataFrame) -> np.array:
     return neuron_data.query("mtype=='"+pop+"'").index.values - shift
 
 
+class MPDataManager:
+    def __init__(self, path: Path, matrix: Optional[sp.csr_matrix]):
+        if path.exists():
+            if path.suffix == ".flag":
+                try:
+                    self._matrix = load_sparse_matrix_from_pkl(path.with_suffix(".pkl"))
+                    flagser_count(path, path.with_name(path.stem + "-count.h5"))
 
+                    self._flagser_path = path
+                    self._pickle_path = path.with_suffix(".pkl")
+                    self._count_path = path.with_name(path.stem + "-count.h5")
+
+                except Exception as message:
+                    print("Flagser file found, but matrix not found in pickle format.")
+                    print(message)
+
+            elif path.suffix == ".pkl":
+                try:
+                    self._matrix = load_sparse_matrix_from_pkl(path)
+
+                    self._flagser_path = path.with_suffix(".flag")
+                    self._pickle_path = path
+                    self._count_path = path.with_name(path.stem + "-count.h5")
+                    if self._flagser_path.exists() and self._count_path.exists():
+                        print("Using preexisting flagser files at "+str(self._count_path))
+                    else:
+                        write_flagser_file(self._flagser_path)
+                        flagser_count(self._flagser_path, self._count_path)
+                except Exception as message:
+                    print("Couldn't load matrix from pickle.")
+                    print(message)
+        else:
+            path.parent.mkdir(exist_ok=True, parents=True)
+            if matrix is not None:
+                self._matrix = matrix
+                self._flagser_path, self._pickle_path, self._count_path = save_count_graph_from_matrix(path, matrix)
+            else:
+                print("If matrix is None, path should exist.")
+
+        try:
+            self._count_file = h5py.File(self._count_path, 'r')
+
+        except Exception as message:
+            print("Could not open count file " + str(self._count_path))
+            print(message)
+
+    def __del__(self):
+        try:
+            for link in self._full_matrix_link + self._bid_matrix_link:
+                link.unlink()
+        except:
+            pass
+
+    def _prepare_shared_memory(self):
+        try:
+            self._full_matrix_info, self._full_matrix_link = prepare_shared_memory(self._matrix, 'full')
+            self._bid_matrix = self._matrix.multiply(self._matrix.T)
+            self._bid_matrix_info, self._bid_matrix_link = prepare_shared_memory(self._bid_matrix, 'bid')
+        except FileExistsError:
+            pass
+        
+    def _prepare_random_selection(self, n_simplices: int, dimension: int):
+        self._random_selection = np.random.choice(self._count_file["Cells_" + str(dimension)].shape[0],
+                                            min(
+                                                n_simplices,
+                                                self._count_file["Cells_" + str(dimension)].shape[0]
+                                            ),
+                                            replace=False)
+        self._random_selection.sort()
+
+    def mp_simplex_iterator(self, n: Optional[int] = None, dimension: int = 1, random: False = bool):
+        self._prepare_shared_memory()
+        if random:
+            self._prepare_random_selection(n, dimension)
+            simplex_iterator = self._count_file['Cells_' + str(dimension)][self._random_selection]
+        else:
+            if n:
+                simplex_iterator = self._count_file['Cells_' + str(dimension)][:n]
+            else:
+                simplex_iterator = self._count_file['Cells_' + str(dimension)]
+
+        return product(simplex_iterator, [self._full_matrix_info], [self._bid_matrix_info])
