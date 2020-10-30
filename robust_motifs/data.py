@@ -1,10 +1,10 @@
 import h5py
 import os
+import numpy as np
+import networkx
 from pathlib import Path
 import pandas as pd
 import pickle
-import numpy as np
-import networkx
 from tqdm import tqdm
 from typing import List, Optional, Union
 import scipy.sparse as sp
@@ -15,7 +15,7 @@ def import_connectivity_matrix(path: Path = Path('data/test/cons_locs_pathways_m
                         dataframe: bool = True,
                         type: Optional[str] = None,
                         pathway_shuffle: bool = False) -> Union[np.ndarray, pd.DataFrame]:
-    """Imports the connectivity matrix of the BBP model.
+    """Imports the connectivity matrix of the BBP model (h5 format)
 
     :argument path: (Path) Path to load the data from.
     :argument zones: (Optional[List[str]]) List of zone strings to load.
@@ -71,8 +71,16 @@ def import_connectivity_matrix(path: Path = Path('data/test/cons_locs_pathways_m
         return df
 
 
-def matrix_shuffle(matrix: Union[sp.csr_matrix, np.ndarray], exclude_diagonal:bool = False, sparse: bool = True):
+def matrix_shuffle(matrix: Union[sp.csr_matrix, np.ndarray], exclude_diagonal: bool = False, sparse: bool = True):
     """Returns shuffled version of a matrix, with care not to put elements on the diagonal.
+
+        :argument matrix: (Union[sp.csr_matrix, np.ndarray]) matrix to shuffle. Both sparse and dense formats
+            acceptable.
+        :parameter exclude_diagonal: (bool) whether to exclude the diagonal of the matrix from the shuffling.
+            Only for square matrices.
+        :parameter sparse: (bool) whether the matrix is sparse.
+
+        :returns shuffled_matrix: (Union[sp.csr_matrix, np.ndarray]) shuffled matrix.
     """
     if sparse:
         if exclude_diagonal:
@@ -120,10 +128,11 @@ def matrix_shuffle(matrix: Union[sp.csr_matrix, np.ndarray], exclude_diagonal:bo
             _matrix = lower_matrix + upper_matrix
         return _matrix
 
+
 def write_flagser_file(path: Path, matrix: sp.csr_matrix):
     """Writes a matrix as a flagser file.
-    :argument path: flagser file path.
-    :argument matrix: sparse matrix.
+        :argument path: flagser file path.
+        :argument matrix: sparse matrix.
     """
     n_nodes = matrix.shape[0]
     with open(path, "w") as f:
@@ -138,14 +147,14 @@ def write_flagser_file(path: Path, matrix: sp.csr_matrix):
 
 def save_er_graph(path: Path, n_nodes: int, density: float):
     """Saves the ER graph as a flagser-readable file, and pickle-dumps
-    the adjacency matrix.
+        the adjacency matrix.
 
-    :argument path: (Path) path of flagser file to be written.
-    :argument n_nodes: (int) number of nodes of the graph.
-    :argument density: (float) graph edge density.
+        :argument path: (Path) path of flagser file to be written.
+        :argument n_nodes: (int) number of nodes of the graph.
+        :argument density: (float) graph edge density.
 
-    :returns flag_path: (Path) flagser file path.
-    :returns pickle_path: (Path) pickle file path.
+        :returns flag_path: (Path) flagser file path.
+        :returns pickle_path: (Path) pickle file path.
     """
     g = networkx.fast_gnp_random_graph(n_nodes, density, directed=True)
     a = networkx.adjacency_matrix(g)
@@ -159,15 +168,15 @@ def save_er_graph(path: Path, n_nodes: int, density: float):
 
 def save_count_er_graph(path: Path, n_nodes: int, density: float):
     """Saves the ER graph as a flagser-readable file, and pickle-dumps
-    the adjacency matrix. Creates the
+    the adjacency matrix. Creates the h5 count file with flagser.
 
-    :argument path: (Path) path of flagser file to be written.
-    :argument n_nodes: (int) number of nodes of the graph.
-    :argument density: (float) graph edge density.
+        :argument path: (Path) path of flagser file to be written.
+        :argument n_nodes: (int) number of nodes of the graph.
+        :argument density: (float) graph edge density.
 
-    :returns flag_path: (Path) flagser file path.
-    :returns pickle_path: (Path) pickle file path.
-    :returns count_path: (Path) flagser-count h5 file path.
+        :returns flag_path: (Path) flagser file path.
+        :returns pickle_path: (Path) pickle file path.
+        :returns count_path: (Path) flagser-count h5 file path.
     """
     path, pickle_path = save_er_graph(path, n_nodes, density)
     count_path = path.parent / Path(path.stem + "-count.h5")
@@ -177,6 +186,16 @@ def save_count_er_graph(path: Path, n_nodes: int, density: float):
 
 
 def save_count_graph_from_matrix(path: Path, matrix: sp.csr_matrix):
+    """Saves the graph from the adjacency matrix as a flagser-readable file.
+    Pickle-dumps the adjacency matrix. Creates the h5 count file with flagser.
+
+        :argument path: (Path) path of flagser file to be written.
+        :argument matrix: (sp.csr_matrix) matrix to be dumped.
+
+        :returns flag_path: (Path) flagser file path.
+        :returns pickle_path: (Path) pickle file path.
+        :returns count_path: (Path) flagser-count h5 file path.
+    """
     pickle_path = path.with_suffix(".pkl")
     count_path = path.parent / Path(path.stem + "-count.h5")
     write_flagser_file(path, matrix)
@@ -199,6 +218,11 @@ def load_sparse_matrix_from_pkl(path: Path):
 
 
 def save_sparse_matrix_to_pkl(path: Path, matrix: sp.csr_matrix):
+    """Saves a sparse matrix to a pickle file.
+
+    :argument path: (Path) path of the pickle file to be created.
+    :argument matrix: (sp.csr_matrix) matrix to be saved.
+    """
     with open(path, "wb") as file:
         pickle.dump(
             {'data': matrix.data,
@@ -209,12 +233,25 @@ def save_sparse_matrix_to_pkl(path: Path, matrix: sp.csr_matrix):
 
 
 def flagser_count(in_path: Path, out_path: Path, overwrite: bool = True):
+    """Uses flagser to build flagser count file.
+
+    :argument in_path: (Path) flagser file to read and count.
+    :argument out_path: (Path) file to write as output.
+    :parameter overwrite: (bool) whether to overwrite if it exists.
+    """
     if overwrite:
         out_path.unlink(missing_ok=True)
     os.system("flagser-count " + str(in_path) + " --out " + str(out_path))
 
 
 def adjust_bidirectional_edges(matrix: sp.csr_matrix, target: int):
+    """Function to adjust the number of bidirectional edges of a matrix.
+
+        :argument matrix: (sp.csr_matrix) matrix to adjust the edges of.
+        :argument target: (int) number of bidirectional edges to reach.
+
+        :returns adjusted_matrix: (sp.csr_matrix) adjusted matrix.
+    """
     b_matrix = matrix.multiply(matrix.T)
     b_edges = int(b_matrix.count_nonzero()/2)
     d_matrix = matrix - b_matrix
@@ -243,7 +280,13 @@ def adjust_bidirectional_edges(matrix: sp.csr_matrix, target: int):
 
 
 def load_bbp_matrix_format(path: Path, shuffle_type: str = None):
-    # to load the data
+    """load data in the bbp format.
+
+    :argument path: (Path) path of the npy file.
+    :parameter shuffle type: (str) type of shuffling. Can be 'all', 'pathway', or None.
+
+    :returns matrix: (sp.csr_matrix) sparse adjacency matrix.
+    """
     mat = np.load(str(path))
     neuron_data = pd.read_pickle(path.with_name(path.stem.replace("matrix", "neuron_data")))
 
@@ -265,10 +308,23 @@ def load_bbp_matrix_format(path: Path, shuffle_type: str = None):
                 for i1, elem1 in enumerate(d[pop1]):
                     for i2, elem2 in enumerate(d[pop2]):
                         mat[elem1, elem2] = temp_mat[i1, i2]
+
+    elif shuffle_type is None:
+        pass
+    else:
+        raise ValueError
     return sp.csr_matrix(mat)
 
 
-def retrieve_indices(pop, neuron_data):
+def retrieve_indices(pop: str, neuron_data: pd.DataFrame) -> np.array:
+    """Retrieves indices of neurons in a given population.
+
+    :argument pop: (str) string that indicates population to be considered.
+    :argument neuron_data: (pd.DataFrame) dataframe containing neuron data.
+
+    :returns indices: (np.array) list of indices of neurons.
+    """
+
     shift = neuron_data.index.values[0]  # this is the gid of the first neuron we should shift by them
     return neuron_data.query("mtype=='"+pop+"'").index.values - shift
 

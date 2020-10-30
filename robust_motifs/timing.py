@@ -1,13 +1,13 @@
 import h5py
 from itertools import product
-import networkx
 import multiprocessing as mp
+import networkx
 import numpy as np
 from pathlib import Path
-import sys
-from typing import Callable, Optional
 import time
+import sys
 from tqdm import tqdm
+from typing import List, Optional, Tuple
 
 from .data import (
     load_sparse_matrix_from_pkl, write_flagser_file,
@@ -18,6 +18,13 @@ from .counting import get_n_extended_simplices, get_bisimplices, get_extended_si
 
 
 class Timer:
+    """Timer class for timing multiprocessing function calls.
+
+    :argument matrix_path: (Path) path to the matrix, if exists, or path to save ER graph.
+    :argument n_nodes: (int) number of nodes to create ER graph with.
+    :argument density: (float) edge density to create ER graph with.
+    :parameter overwrite: (bool) whether to override preexisting .flag, .h5 data.
+    """
     def __init__(self,
                  matrix_path: Path,
                  n_nodes: Optional[int] = None, density: Optional[float] = None,
@@ -79,7 +86,14 @@ class Timer:
              n_simplices: int = 10000,
              n_iterations: int = 10,
              dimension: int = 1,
-             random: bool = True):
+             random: bool = True) -> Tuple[List[float], List[float], List[int]]:
+        """Core timing function for mp over simplices.
+
+        :argument n_simplices: (int) number of simplices per iteration.
+        :argument n_iterations: (int) number of iterations.
+        :argument dimension: (int) dimension of simplices to use.
+        :parameter random: (bool) whether to use random simplices. Takes more time!
+        """
         self._prepare_multiprocessing(cores_count)
         timings = []
         prep_timings = []

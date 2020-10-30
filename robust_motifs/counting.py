@@ -1,125 +1,11 @@
-import multiprocessing as mp
 from multiprocessing.shared_memory import SharedMemory
 import numpy as np
 import scipy.sparse as sp
-from typing import Dict, List, Optional, Tuple
-
-import time
-
-
-# Currently unused.
-def is_acyclic_simplex(data: Tuple[List[int], Dict]) -> bool:
-    """Function that returns whether a given subset of neurons gives rise to
-    an acyclic subgraph.
-
-    :argument data: (tuple[List, Dict]) data to check acyclicity on.
-        The first element of the tuple contains the indices of the neurons
-        in the adjacency matrix.
-        The second element of the tuple contains a dictionary that specifies
-        the shared memory location of the full matrix.
-
-    :returns flag: (bool) True if complex is acyclic."""
-    simplex = data[0]
-    arrays = data[1]
-    sm_data = SharedMemory(name=arrays['data']['name'])
-    sm_indices = SharedMemory(name=arrays['indices']['name'])
-    sm_indptr = SharedMemory(name=arrays['indptr']['name'])
-    sdata = np.ndarray((int(arrays['data']['size'] / arrays['data']['factor']),),
-                       dtype=arrays['data']['type'],
-                       buffer=sm_data.buf)
-    sindices = np.ndarray((int(arrays['indices']['size'] / arrays['indices']['factor']),),
-                          dtype=arrays['indices']['type'],
-                          buffer=sm_indices.buf)
-    sindptr = np.ndarray((int(arrays['indptr']['size'] / arrays['indptr']['factor']),),
-                         dtype=arrays['indptr']['type'],
-                         buffer=sm_indptr.buf)
-    matrix = sp.csr_matrix((sdata, sindices, sindptr))
-    submatrix = matrix[simplex].T[simplex].T
-    if submatrix.sum() <= len(simplex)*(len(simplex)-1)/2:
-        return True
-    else:
-        return False
-
-
-# Currently unused.
-def has_dag2_extension(data: Tuple[List[int], Dict]) -> List[np.ndarray]:
-    """Function that returns all dag2 subgraph extensions of a given simplex.
-
-    :argument data: (tuple[List, Dict]) data to check acyclicity on.
-        The first element of the tuple contains the indices of the neurons
-        in the adjacency matrix.
-        The second element of the tuple contains a dictionary that specifies
-        the shared memory location of the full matrix.
-
-    :returns dags2: (List[np.ndarray]) list of all sets of neurons whose full subgraph
-        gives rise to a dag2 motif.
-    """
-    simplex = data[0]
-    arrays = data[1]
-    sm_data = SharedMemory(name=arrays['data']['name'])
-    sm_indices = SharedMemory(name=arrays['indices']['name'])
-    sm_indptr = SharedMemory(name=arrays['indptr']['name'])
-    sdata = np.ndarray((int(arrays['data']['size'] / arrays['data']['factor']),),
-                       dtype=arrays['data']['type'],
-                       buffer=sm_data.buf)
-    sindices = np.ndarray((int(arrays['indices']['size'] / arrays['indices']['factor']),),
-                          dtype=arrays['indices']['type'],
-                          buffer=sm_indices.buf)
-    sindptr = np.ndarray((int(arrays['indptr']['size'] / arrays['indptr']['factor']),),
-                         dtype=arrays['indptr']['type'],
-                         buffer=sm_indptr.buf)
-    matrix = sp.csr_matrix((sdata, sindices, sindptr))
-    targets = matrix[simplex[-1]].multiply(matrix.T[simplex[-1]]).nonzero()[1]
-    # it's enough to check last face.
-    dags2 = []
-    for target in targets:
-        if matrix[target].T[simplex[:-1]].count_nonzero() == 0:
-            dags2.append(np.append(simplex, target))
-    return dags2
-
-
-# Currently unused, does not take into account the fact that a node can be internal.
-def get_dag2_signature(data: Tuple[List, Dict]):
-    """Function that returns the dag2 signature of all extensions of a simplex (if any).
-
-        :argument data: (tuple[List, Dict]) data to check acyclicity on.
-            The first element of the tuple contains the indices of the neurons
-            in the adjacency matrix.
-            The second element of the tuple contains a dictionary that specifies
-            the shared memory location of the full matrix.
-
-        :returns dags2: (Optional[List[Tuple]]) signature of the dag2 graph.
-        """
-    simplex = data[0]
-    arrays = data[1]
-    sm_data = SharedMemory(name=arrays['data']['name'])
-    sm_indices = SharedMemory(name=arrays['indices']['name'])
-    sm_indptr = SharedMemory(name=arrays['indptr']['name'])
-    sdata = np.ndarray((int(arrays['data']['size'] / arrays['data']['factor']),),
-                       dtype=arrays['data']['type'],
-                       buffer=sm_data.buf)
-    sindices = np.ndarray((int(arrays['indices']['size'] / arrays['indices']['factor']),),
-                          dtype=arrays['indices']['type'],
-                          buffer=sm_indices.buf)
-    sindptr = np.ndarray((int(arrays['indptr']['size'] / arrays['indptr']['factor']),),
-                         dtype=arrays['indptr']['type'],
-                         buffer=sm_indptr.buf)
-    matrix = sp.csr_matrix((sdata, sindices, sindptr))
-
-    targets = matrix[simplex[-1]].multiply(matrix.T[simplex[-1]]).nonzero()[1]
-    dags2 = []
-    for target in targets:
-        dags2.append(
-            (
-                np.append(simplex, target),
-                matrix[simplex[:-1]].T[target].toarray()[0]
-             )
-        )
-    return dags2
+from typing import Any, Dict, List, Tuple
 
 
 def get_bidirectional_targets(data: Tuple[List, Dict]):
-    """Function that returns the bidirectional targets of the last nodes of a simplex (if any).
+    """Function that returns the bidirectional targets of an index (if any).
 
         :argument data: (tuple[List, Dict]) data to check acyclicity on.
             The first element of the tuple contains the indices of the neurons
@@ -147,8 +33,9 @@ def get_bidirectional_targets(data: Tuple[List, Dict]):
     return matrix[element].multiply(matrix.T[element]).nonzero()[1]
 
 
-def retrieve_sparse_shared_matrix(matrix_info):
+def retrieve_sparse_shared_matrix(matrix_info: Dict[str, Any]):
     # Doesn't seem to work because pickling or pass by reference?
+    # I reduced to rewriting this thing in each function.
     sm_data = SharedMemory(name=matrix_info['data']['name'])
     sm_indices = SharedMemory(name=matrix_info['indices']['name'])
     sm_indptr = SharedMemory(name=matrix_info['indptr']['name'])
@@ -164,11 +51,23 @@ def retrieve_sparse_shared_matrix(matrix_info):
     return sp.csr_matrix((sdata, sindices, sindptr))
 
 
-def get_n_extended_simplices(mp_element):
+def get_n_extended_simplices(mp_element: Tuple[List, Dict, Dict]) -> int:
+    """Function that returns the number of extended simplices of a simplex.
+        :argument data: (tuple[List, Dict, Dict]) data to check retrieve the extended simplices.
+            The first element of the tuple contains the indices of the neurons
+            in the adjacency matrix.
+            The second element of the tuple contains a dictionary that specifies
+            the shared memory location and info of the full matrix.
+            The third element of the tuple contains a dictionary that specifies the
+            shared memory location and info of the bidirectional targets matrix
+
+        :returns es_count: (int) Number of extended simplices containing this simplex.
+    """
     simplex = mp_element[0]
     full_matrix_info = mp_element[1]
     bidirectional_matrix_info = mp_element[2]
 
+    # Retrieve first matrix location:
     sm_data = SharedMemory(name=full_matrix_info['data']['name'])
     sm_indices = SharedMemory(name=full_matrix_info['indices']['name'])
     sm_indptr = SharedMemory(name=full_matrix_info['indptr']['name'])
@@ -182,8 +81,10 @@ def get_n_extended_simplices(mp_element):
                          dtype=full_matrix_info['indptr']['type'],
                          buffer=sm_indptr.buf)
 
+    # TODO : implement 1-matrix version
     full_matrix = sp.csr_matrix((sdata, sindices, sindptr))
 
+    # Retrieve second matrix location:
     sm_data = SharedMemory(name=bidirectional_matrix_info['data']['name'])
     sm_indices = SharedMemory(name=bidirectional_matrix_info['indices']['name'])
     sm_indptr = SharedMemory(name=bidirectional_matrix_info['indptr']['name'])
@@ -198,10 +99,24 @@ def get_n_extended_simplices(mp_element):
                          buffer=sm_indptr.buf)
 
     bid_matrix = sp.csr_matrix((sdata, sindices, sindptr))
-    return len(set(bid_matrix[simplex[-1]].nonzero()[1]) - set(simplex[:-1])), len(bid_matrix[simplex[-1]].nonzero()[1])
+
+    # Actual computation:
+    return len(set(bid_matrix[simplex[-1]].nonzero()[1]) - set(simplex[:-1]))
 
 
-def get_bisimplices(mp_element):
+def get_bisimplices(mp_element: Tuple[List, Dict, Dict]) -> List[Tuple[int]]:
+    """Function that returns the list of bisimplices of a simplex.
+        :argument data: (tuple[List, Dict, Dict]) data to check retrieve the extended simplices.
+            The first element of the tuple contains the indices of the neurons
+            in the adjacency matrix.
+            The second element of the tuple contains a dictionary that specifies
+            the shared memory location and info of the full matrix.
+            The third element of the tuple contains a dictionary that specifies the
+            shared memory location and info of the bidirectional targets matrix
+
+        :returns bisimplices: List[Tuple[int]] List of bisimplices indices in tuple form, with
+            the extra 2-clique as an ordered pair (for duplicate checking).
+    """
     simplex = mp_element[0]
     full_matrix_info = mp_element[1]
     bidirectional_matrix_info = mp_element[2]
@@ -250,6 +165,17 @@ def get_bisimplices(mp_element):
 
 
 def get_extended_simplices_with_signature(mp_element):
+    """Function that returns the list of bisimplices of a simplex.
+        :argument data: (tuple[List, Dict, Dict]) data to check retrieve the extended simplices.
+            The first element of the tuple contains the indices of the neurons
+            in the adjacency matrix.
+            The second element of the tuple contains a dictionary that specifies
+            the shared memory location and info of the full matrix.
+            The third element of the tuple contains a dictionary that specifies the
+            shared memory location and info of the bidirectional targets matrix
+
+        :returns bisimplices: List[List[int]] List of extended simplices indices in list form.
+    """
     simplex = mp_element[0]
     full_matrix_info = mp_element[1]
     bidirectional_matrix_info = mp_element[2]

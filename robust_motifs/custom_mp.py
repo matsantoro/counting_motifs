@@ -1,10 +1,10 @@
 from multiprocessing.shared_memory import SharedMemory
 import numpy as np
 import scipy.sparse as sp
-from typing import Dict
+from typing import Dict, List, Tuple
 
 
-def prepare_shared_memory(matrix: sp.csr_matrix, prefix: str) -> Dict:
+def prepare_shared_memory(matrix: sp.csr_matrix, prefix: str) -> Tuple[Dict, List]:
     """Function that prepares shared memory for sparse matrix.
 
     :argument matrix: (sp.csr_matrix) matrix to add in shared memory.
@@ -42,7 +42,7 @@ def prepare_shared_memory(matrix: sp.csr_matrix, prefix: str) -> Dict:
     return array, [data, indices, indptr]
 
 
-def share_dense_matrix(matrix: np.ndarray):
+def share_dense_matrix(matrix: np.ndarray) -> Tuple[Dict, List]:
     """Add a dense matrix in a shared memory block.
 
     :argument matrix: (np.ndarray) dense matrix to be shared.
