@@ -6,6 +6,7 @@ import networkx
 from pathlib import Path
 import pandas as pd
 import pickle
+import time
 from tqdm import tqdm
 from typing import List, Optional, Union
 import scipy.sparse as sp
@@ -412,5 +413,23 @@ class MPDataManager:
                 simplex_iterator = self._count_file['Cells_' + str(dimension)][:n]
             else:
                 simplex_iterator = self._count_file['Cells_' + str(dimension)]
+
+        return product(simplex_iterator, [self._full_matrix_info], [self._bid_matrix_info])
+
+    def mp_np_simplex_iterator(self, n: Optional[int] = None, dimension: int = 1, random: False = bool):
+        self._prepare_shared_memory()
+        print('Loading simplices in numpy array..')
+        s1 = time.time()
+        if random:
+            self._prepare_random_selection(n, dimension)
+            simplex_iterator = np.array(self._count_file['Cells_' + str(dimension)][self._random_selection])
+        else:
+            if n:
+                simplex_iterator = np.array(self._count_file['Cells_' + str(dimension)][:n])
+            else:
+                simplex_iterator = np.array(self._count_file['Cells_' + str(dimension)])
+
+        e1 = time.time()
+        print('Done! Elapsed time: ' + str(e1 - s1))
 
         return product(simplex_iterator, [self._full_matrix_info], [self._bid_matrix_info])
