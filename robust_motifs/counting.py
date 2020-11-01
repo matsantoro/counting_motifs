@@ -219,3 +219,111 @@ def get_extended_simplices_with_signature(mp_element):
         signatures.append(signature)
     return ext_simplices, signatures
 
+
+def get_n_extended_simplices_dense(mp_element: Tuple[List, Dict, Dict]) -> int:
+    """Function that returns the number of extended simplices of a simplex.
+        :argument data: (tuple[List, Dict, Dict]) data to check retrieve the extended simplices.
+            The first element of the tuple contains the indices of the neurons
+            in the adjacency matrix.
+            The second element of the tuple contains a dictionary that specifies
+            the shared memory location and info of the full matrix.
+            The third element of the tuple contains a dictionary that specifies the
+            shared memory location and info of the bidirectional targets matrix
+
+        :returns es_count: (int) Number of extended simplices containing this simplex.
+    """
+    simplex = mp_element[0]
+    full_matrix_info = mp_element[1]
+    bidirectional_matrix_info = mp_element[2]
+
+    # Retrieve first matrix location:
+    full_memory_block = SharedMemory(name=full_matrix_info['name'], size=full_matrix_info['size'])
+    full_matrix = np.ndarray(shape=full_matrix_info['shape'], dtype=full_matrix_info['type'], buffer=full_memory_block.buf)
+
+
+    # Retrieve second matrix location:
+    bid_memory_block = SharedMemory(name=bidirectional_matrix_info['name'], size=bidirectional_matrix_info['size'])
+    bid_matrix = np.ndarray(shape=bidirectional_matrix_info['shape'], dtype=bidirectional_matrix_info['type'],
+                             buffer=bid_memory_block.buf)
+
+    # Actual computation:
+    return len(set(bid_matrix[simplex[-1]].nonzero()[0]) - set(simplex[:-1]))
+
+
+def get_bisimplices_dense(mp_element: Tuple[List, Dict, Dict]) -> List[Tuple[int]]:
+    """Function that returns the list of bisimplices of a simplex.
+        :argument data: (tuple[List, Dict, Dict]) data to check retrieve the extended simplices.
+            The first element of the tuple contains the indices of the neurons
+            in the adjacency matrix.
+            The second element of the tuple contains a dictionary that specifies
+            the shared memory location and info of the full matrix.
+            The third element of the tuple contains a dictionary that specifies the
+            shared memory location and info of the bidirectional targets matrix
+
+        :returns bisimplices: List[Tuple[int]] List of bisimplices indices in tuple form, with
+            the extra 2-clique as an ordered pair (for duplicate checking).
+    """
+    simplex = mp_element[0]
+    full_matrix_info = mp_element[1]
+    bidirectional_matrix_info = mp_element[2]
+
+    # Retrieve first matrix location:
+    full_memory_block = SharedMemory(name=full_matrix_info['name'], size=full_matrix_info['size'])
+    full_matrix = np.ndarray(shape=full_matrix_info['shape'], dtype=full_matrix_info['type'],
+                             buffer=full_memory_block.buf)
+
+    # Retrieve second matrix location:
+    bid_memory_block = SharedMemory(name=bidirectional_matrix_info['name'], size=bidirectional_matrix_info['size'])
+    bid_matrix = np.ndarray(shape=bidirectional_matrix_info['shape'], dtype=bidirectional_matrix_info['type'],
+                            buffer=bid_memory_block.buf)
+
+    bisimplices = []
+    for elem in (set(bid_matrix[simplex[-1]].nonzero()[0]).difference(set(simplex[:-1]))):
+        f = True
+        signature = full_matrix[simplex[:-1]].T[elem].T
+        for flag in signature:
+            if not flag:
+                f = False
+                break
+        if f:
+            bisimplices.append(tuple(simplex[:-1].tolist() + sorted([simplex[-1], elem])))
+    return bisimplices
+
+def count_bisimplices_dense(mp_element: Tuple[List, Dict, Dict]) -> List[Tuple[int]]:
+    """Function that returns the list of bisimplices of a simplex.
+        :argument data: (tuple[List, Dict, Dict]) data to check retrieve the extended simplices.
+            The first element of the tuple contains the indices of the neurons
+            in the adjacency matrix.
+            The second element of the tuple contains a dictionary that specifies
+            the shared memory location and info of the full matrix.
+            The third element of the tuple contains a dictionary that specifies the
+            shared memory location and info of the bidirectional targets matrix
+
+        :returns bisimplices: List[Tuple[int]] List of bisimplices indices in tuple form, with
+            the extra 2-clique as an ordered pair (for duplicate checking).
+    """
+    simplex = mp_element[0]
+    full_matrix_info = mp_element[1]
+    bidirectional_matrix_info = mp_element[2]
+
+    # Retrieve first matrix location:
+    full_memory_block = SharedMemory(name=full_matrix_info['name'], size=full_matrix_info['size'])
+    full_matrix = np.ndarray(shape=full_matrix_info['shape'], dtype=full_matrix_info['type'],
+                             buffer=full_memory_block.buf)
+
+    # Retrieve second matrix location:
+    bid_memory_block = SharedMemory(name=bidirectional_matrix_info['name'], size=bidirectional_matrix_info['size'])
+    bid_matrix = np.ndarray(shape=bidirectional_matrix_info['shape'], dtype=bidirectional_matrix_info['type'],
+                            buffer=bid_memory_block.buf)
+
+    count = 0
+    for elem in (set(bid_matrix[simplex[-1]].nonzero()[0]).difference(set(simplex[:-1]))):
+        f = True
+        signature = full_matrix[simplex[:-1]].T[elem].T
+        for flag in signature:
+            if not flag:
+                f = False
+                break
+        if f:
+            count += 1
+    return count

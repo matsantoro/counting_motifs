@@ -11,7 +11,7 @@ from tqdm import tqdm
 from typing import List, Optional, Union
 import scipy.sparse as sp
 
-from .custom_mp import prepare_shared_memory
+from .custom_mp import prepare_shared_memory, share_dense_matrix
 
 
 def import_connectivity_matrix(path: Path = Path('data/test/cons_locs_pathways_mc0_Column.h5'),
@@ -393,6 +393,14 @@ class MPDataManager:
             self._bid_matrix_info, self._bid_matrix_link = prepare_shared_memory(self._bid_matrix, 'bid')
         except FileExistsError:
             pass
+
+    def _prepare_shared_memory_dense(self):
+        try:
+            self._full_matrix_info, self._full_matrix_link = share_dense_matrix(np.array(self._matrix.todense()))
+            self._bid_matrix = self._matrix.multiply(self._matrix.T)
+            self._bid_matrix_info, self._bid_matrix_link = share_dense_matrix(np.array(self._bid_matrix.todense()))
+        except FileExistsError:
+            pass
         
     def _prepare_random_selection(self, n_simplices: int, dimension: int):
         self._random_selection = np.random.choice(self._count_file["Cells_" + str(dimension)].shape[0],
@@ -418,8 +426,6 @@ class MPDataManager:
 
     def mp_np_simplex_iterator(self, n: Optional[int] = None, dimension: int = 1, random: False = bool):
         self._prepare_shared_memory()
-        print('Loading simplices in numpy array..')
-        s1 = time.time()
         if random:
             self._prepare_random_selection(n, dimension)
             simplex_iterator = np.array(self._count_file['Cells_' + str(dimension)][self._random_selection])
@@ -429,7 +435,17 @@ class MPDataManager:
             else:
                 simplex_iterator = np.array(self._count_file['Cells_' + str(dimension)])
 
-        e1 = time.time()
-        print('Done! Elapsed time: ' + str(e1 - s1))
+        return product(simplex_iterator, [self._full_matrix_info], [self._bid_matrix_info])
+
+    def mp_np_simplex_iterator_dense(self, n: Optional[int] = None, dimension: int = 1, random: False = bool):
+        self._prepare_shared_memory_dense()
+        if random:
+            self._prepare_random_selection(n, dimension)
+            simplex_iterator = np.array(self._count_file['Cells_' + str(dimension)][self._random_selection])
+        else:
+            if n:
+                simplex_iterator = np.array(self._count_file['Cells_' + str(dimension)][:n])
+            else:
+                simplex_iterator = np.array(self._count_file['Cells_' + str(dimension)])
 
         return product(simplex_iterator, [self._full_matrix_info], [self._bid_matrix_info])
