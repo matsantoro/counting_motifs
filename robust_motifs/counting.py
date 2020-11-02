@@ -233,12 +233,13 @@ def get_n_extended_simplices_dense(mp_element: Tuple[List, Dict, Dict]) -> int:
         :returns es_count: (int) Number of extended simplices containing this simplex.
     """
     simplex = mp_element[0]
-    full_matrix_info = mp_element[1]
+    # full_matrix_info = mp_element[1]
     bidirectional_matrix_info = mp_element[2]
 
     # Retrieve first matrix location:
-    full_memory_block = SharedMemory(name=full_matrix_info['name'], size=full_matrix_info['size'])
-    full_matrix = np.ndarray(shape=full_matrix_info['shape'], dtype=full_matrix_info['type'], buffer=full_memory_block.buf)
+    # Actually causes loss of performance!
+    # full_memory_block = SharedMemory(name=full_matrix_info['name'], size=full_matrix_info['size'])
+    # full_matrix = np.ndarray(shape=full_matrix_info['shape'], dtype=full_matrix_info['type'], buffer=full_memory_block.buf)
 
 
     # Retrieve second matrix location:
@@ -327,3 +328,34 @@ def count_bisimplices_dense(mp_element: Tuple[List, Dict, Dict]) -> List[Tuple[i
         if f:
             count += 1
     return count
+
+
+def get_n_extended_simplices_new(mp_element: Tuple[List, Dict, Dict]) -> int:
+    """Function that returns the number of extended simplices of a simplex.
+        :argument data: (tuple[List, Dict, Dict]) data to check retrieve the extended simplices.
+            The first element of the tuple contains the indices of the neurons
+            in the adjacency matrix.
+            The second element of the tuple contains a dictionary that specifies
+            the shared memory location and info of the full matrix.
+            The third element of the tuple contains a dictionary that specifies the
+            shared memory location and info of the bidirectional targets matrix
+
+        :returns es_count: (int) Number of extended simplices containing this simplex.
+    """
+    simplex = mp_element[0]
+    bidirectional_matrix_info = mp_element[2]
+
+    # Retrieve second matrix location:
+    sm_indices = SharedMemory(name=bidirectional_matrix_info['indices']['name'])
+    sm_indptr = SharedMemory(name=bidirectional_matrix_info['indptr']['name'])
+
+    sindices = np.ndarray((int(bidirectional_matrix_info['indices']['size'] / bidirectional_matrix_info['indices']['factor']),),
+                          dtype=bidirectional_matrix_info['indices']['type'],
+                          buffer=sm_indices.buf)
+    sindptr = np.ndarray((int(bidirectional_matrix_info['indptr']['size'] / bidirectional_matrix_info['indptr']['factor']),),
+                         dtype=bidirectional_matrix_info['indptr']['type'],
+                         buffer=sm_indptr.buf)
+
+
+    # Actual computation:
+    return len(set(sindices[sindptr[simplex[-1]]:sindptr[simplex[-1]+1]]) - set(simplex[:-1]))
