@@ -380,11 +380,15 @@ class MPDataManager:
             print(message)
 
     def __del__(self):
+        self._shut_shared_memory()
+
+    def _shut_shared_memory(self):
         try:
             for link in self._full_matrix_link + self._bid_matrix_link:
                 link.unlink()
         except:
             pass
+
 
     def _prepare_shared_memory(self):
         try:
