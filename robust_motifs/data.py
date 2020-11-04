@@ -441,7 +441,8 @@ class MPDataManager:
 
         return product(simplex_iterator, [self._full_matrix_info], [self._bid_matrix_info])
 
-    def mp_np_simplex_iterator_dense(self, n: Optional[int] = None, dimension: int = 1, random: False = bool):
+    def mp_np_simplex_iterator_dense(self, n: Optional[int] = None, dimension: int = 1, random: bool = False,
+                                     part: slice = None):
         self._prepare_shared_memory_dense()
         if random:
             self._prepare_random_selection(n, dimension)
@@ -449,7 +450,18 @@ class MPDataManager:
         else:
             if n:
                 simplex_iterator = np.array(self._count_file['Cells_' + str(dimension)][:n])
+            elif part:
+                simplex_iterator = np.array(self._count_file['Cells_' + str(dimension)])[part]
             else:
                 simplex_iterator = np.array(self._count_file['Cells_' + str(dimension)])
 
         return product(simplex_iterator, [self._full_matrix_info], [self._bid_matrix_info])
+
+    def mp_chunks(self, dimension, chunk_dimension):
+        total_length = self._count_file['Cells_'+str(dimension)].shape[0]
+        for i in range(np.ceil(total_length/chunk_dimension).astype(int)):
+            self._shut_shared_memory()
+            yield self.mp_np_simplex_iterator_dense(
+                dimension=dimension,
+                part=slice(i*chunk_dimension, (i+1)*chunk_dimension)
+            )

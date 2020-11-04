@@ -359,3 +359,34 @@ def get_n_extended_simplices_new(mp_element: Tuple[List, Dict, Dict]) -> int:
 
     # Actual computation:
     return len(set(sindices[sindptr[simplex[-1]]:sindptr[simplex[-1]+1]]) - set(simplex[:-1]))
+
+
+def get_extended_simplices_dense(mp_element: Tuple[List, Dict, Dict]) -> np.ndarray:
+    """Function that returns the list of extended simplices of a simplex.
+        :argument data: (tuple[List, Dict, Dict]) data to check retrieve the extended simplices.
+            The first element of the tuple contains the indices of the neurons
+            in the adjacency matrix.
+            The second element of the tuple contains a dictionary that specifies
+            the shared memory location and info of the full matrix.
+            The third element of the tuple contains a dictionary that specifies the
+            shared memory location and info of the bidirectional targets matrix
+
+        :returns es_count: (int) Number of extended simplices containing this simplex.
+    """
+    simplex = mp_element[0]
+    # full_matrix_info = mp_element[1]
+    bidirectional_matrix_info = mp_element[2]
+
+    # Retrieve first matrix location:
+    # Actually causes loss of performance!
+    # full_memory_block = SharedMemory(name=full_matrix_info['name'], size=full_matrix_info['size'])
+    # full_matrix = np.ndarray(shape=full_matrix_info['shape'], dtype=full_matrix_info['type'], buffer=full_memory_block.buf)
+
+
+    # Retrieve second matrix location:
+    bid_memory_block = SharedMemory(name=bidirectional_matrix_info['name'], size=bidirectional_matrix_info['size'])
+    bid_matrix = np.ndarray(shape=bidirectional_matrix_info['shape'], dtype=bidirectional_matrix_info['type'],
+                             buffer=bid_memory_block.buf)
+
+    # Actual computation:
+    return np.array(list(set(bid_matrix[simplex[-1]].nonzero()[0]) - set(simplex[:-1])))
