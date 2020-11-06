@@ -1,7 +1,12 @@
+import multiprocessing as mp
 from multiprocessing.shared_memory import SharedMemory
 import numpy as np
+from pathlib import Path
 import scipy.sparse as sp
+from tqdm import tqdm
 from typing import Any, Dict, List, Tuple
+
+from .data import MPDataManager, load_sparse_matrix_from_pkl
 
 
 def get_bidirectional_targets(data: Tuple[List, Dict]):
@@ -251,7 +256,7 @@ def get_n_extended_simplices_dense(mp_element: Tuple[List, Dict, Dict]) -> int:
     return len(set(bid_matrix[simplex[-1]].nonzero()[0]) - set(simplex[:-1]))
 
 
-def get_bisimplices_dense(mp_element: Tuple[List, Dict, Dict]) -> List[Tuple[int]]:
+def get_bisimplices_dense(mp_element: Tuple[List, Dict, Dict]) -> np.ndarray:
     """Function that returns the list of bisimplices of a simplex.
         :argument data: (tuple[List, Dict, Dict]) data to check retrieve the extended simplices.
             The first element of the tuple contains the indices of the neurons
@@ -287,8 +292,8 @@ def get_bisimplices_dense(mp_element: Tuple[List, Dict, Dict]) -> List[Tuple[int
                 f = False
                 break
         if f:
-            bisimplices.append(tuple(simplex[:-1].tolist() + sorted([simplex[-1], elem])))
-    return bisimplices
+            bisimplices.append(elem)
+    return np.array(bisimplices, dtype=np.int16)
 
 def count_bisimplices_dense(mp_element: Tuple[List, Dict, Dict]) -> List[Tuple[int]]:
     """Function that returns the list of bisimplices of a simplex.
@@ -390,3 +395,83 @@ def get_extended_simplices_dense(mp_element: Tuple[List, Dict, Dict]) -> np.ndar
 
     # Actual computation:
     return np.array(list(set(bid_matrix[simplex[-1]].nonzero()[0]) - set(simplex[:-1])))
+
+
+class Processor:
+    """Class to manage pipeline execution on files in a path.
+
+    :argument in_path: (Path) path to execute pipeline on.
+    """
+    def __init__(self, in_path: Path):
+        self.in_path = in_path
+        self.file_list = list(self.in_path.glob("**/*.pkl"))
+
+    def list_extended_simplices(self):
+        """Produces es files for file in path."""
+        pool = mp.Pool()
+        print("Found " + str(len(self.file_list)) + " .pkl files.")
+        for elem in tqdm(self.file_list, ):
+            motif_counts = np.zeros((7, 2), dtype=int)
+            manager = MPDataManager(elem, None)
+            dimensions = range(1, len(manager._count_file.keys())+1)
+            for dimension in dimensions:
+                chunked_iterator = manager.mp_chunks(dimension=dimension)
+                array = np.empty(shape=(manager._count_file['Cells_' + str(dimension)].shape[0] * 15,),
+                                 dtype=np.int16, )
+                indptr = np.empty(shape=(manager._count_file['Cells_' + str(dimension)].shape[0] + 1,),
+                                  dtype=np.int32, )
+                indptr[0] = 0
+                count = 0
+                for iterator in chunked_iterator:
+
+                    r = pool.imap(get_extended_simplices_dense, iterator, chunksize=5000)
+                    for element in r:
+                        count += 1
+                        indptr[count] = indptr[count - 1] + len(element)
+                        array[indptr[count - 1]:indptr[count]] = element
+                path1 = elem.with_name("ES_D" + str(dimension) + ".npz")
+                np.savez_compressed(open(path1, 'wb'), array[:indptr[-1]])
+                path2 = path1.with_name(path1.stem + "indptr.npz")
+                np.savez_compressed(open(path2, 'wb'), indptr)
+                motif_counts[dimension-1, 0] = len(indptr)-1
+                motif_counts[dimension-1, 1] = indptr[-1]
+                del array
+                del indptr
+            count_path = elem.with_name("ES_count.npz")
+            np.savez_compressed(open(count_path, 'wb'), motif_counts)
+            del manager
+
+    def list_bisimplices(self):
+        """Produces bs files for file in path."""
+        pool = mp.Pool()
+        print("Found " + str(len(self.file_list)) + " .pkl files.")
+        for elem in tqdm(self.file_list, ):
+            motif_counts = np.zeros((7, 2), dtype=int)
+            manager = MPDataManager(elem, None)
+            dimensions = range(1, len(manager._count_file.keys())+1)
+            for dimension in dimensions:
+                chunked_iterator = manager.mp_chunks(dimension=dimension)
+                array = np.empty(shape=(manager._count_file['Cells_' + str(dimension)].shape[0],),
+                                 dtype=np.int16, )
+                indptr = np.empty(shape=(manager._count_file['Cells_' + str(dimension)].shape[0] + 1,),
+                                  dtype=np.int32, )
+                indptr[0] = 0
+                count = 0
+                for iterator in chunked_iterator:
+
+                    r = pool.imap(get_bisimplices_dense, iterator, chunksize=5000)
+                    for element in r:
+                        count += 1
+                        indptr[count] = indptr[count - 1] + len(element)
+                        array[indptr[count - 1]:indptr[count]] = element
+                path1 = elem.with_name("BS_D" + str(dimension) + ".npz")
+                np.savez_compressed(open(path1, 'wb'), array[:indptr[-1]])
+                path2 = path1.with_name(path1.stem + "indptr.npz")
+                np.savez_compressed(open(path2, 'wb'), indptr)
+                motif_counts[dimension-1, 0] = len(indptr)-1
+                motif_counts[dimension-1, 1] = indptr[-1]
+                del array
+                del indptr
+            count_path = elem.with_name("BS_count.npz")
+            np.savez_compressed(open(count_path, 'wb'), motif_counts)
+            del manager
