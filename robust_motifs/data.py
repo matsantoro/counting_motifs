@@ -6,7 +6,6 @@ import networkx
 from pathlib import Path
 import pandas as pd
 import pickle
-import time
 from tqdm import tqdm
 from typing import List, Optional, Union
 import scipy.sparse as sp
@@ -334,6 +333,12 @@ def retrieve_indices(pop: str, neuron_data: pd.DataFrame) -> np.array:
 
 
 class MPDataManager:
+    """Class to produce iterators ready for multiprocessing from data.
+
+    :arumgent path: (pathlib.Path) reference path for the manager. Data will be laoded from here if
+        it exists, or saved here if not. Each folder will be populated with the adjacency matrix in both
+        .pkl and .flag format, and the h5 count file.
+    :argument matrix: (sp.csr_matrix) adjacency matrix in sparse format."""
     def __init__(self, path: Path, matrix: Optional[sp.csr_matrix]):
         if path.exists():
             if path.suffix == ".flag":
@@ -389,8 +394,8 @@ class MPDataManager:
         except:
             pass
 
-
     def _prepare_shared_memory(self):
+        """Prepare shared memory with necessary sparse matrices."""
         try:
             self._full_matrix_info, self._full_matrix_link = prepare_shared_memory(self._matrix, 'full')
             self._bid_matrix = self._matrix.multiply(self._matrix.T)
@@ -399,6 +404,7 @@ class MPDataManager:
             pass
 
     def _prepare_shared_memory_dense(self):
+        """Prepare shared memory with necessary dense matrices."""
         try:
             self._full_matrix_info, self._full_matrix_link = share_dense_matrix(np.array(self._matrix.todense()))
             self._bid_matrix = self._matrix.multiply(self._matrix.T)
@@ -415,7 +421,15 @@ class MPDataManager:
                                             replace=False)
         self._random_selection.sort()
 
-    def mp_simplex_iterator(self, n: Optional[int] = None, dimension: int = 1, random: False = bool):
+    def mp_simplex_iterator(self, n: Optional[int] = None, dimension: int = 1, random: bool = False):
+        """Simplex iterator with sparse matrix references.
+
+        :argument n: (Optional[int]) number of simplices to build the iterator with.
+        :argument dimension: (int) dimension of simplices to prepare.
+        :parameter random: (bool) whether to randomize simplices selection. Only works with specified n.
+
+        :returns iterator: (iterable) the requested iterator.
+        """
         self._prepare_shared_memory()
         if random:
             self._prepare_random_selection(n, dimension)
@@ -429,6 +443,14 @@ class MPDataManager:
         return product(simplex_iterator, [self._full_matrix_info], [self._bid_matrix_info])
 
     def mp_np_simplex_iterator(self, n: Optional[int] = None, dimension: int = 1, random: False = bool):
+        """Simplex iterator with sparse matrix references and numpy-imported simplex list.
+
+        :argument n: (Optional[int]) number of simplices to build the iterator with.
+        :argument dimension: (int) dimension of simplices to prepare.
+        :parameter random: (bool) whether to randomize simplices selection. Only works with specified n.
+
+        :returns iterator: (iterable) the requested iterator.
+        """
         self._prepare_shared_memory()
         if random:
             self._prepare_random_selection(n, dimension)
@@ -443,6 +465,14 @@ class MPDataManager:
 
     def mp_np_simplex_iterator_dense(self, n: Optional[int] = None, dimension: int = 1, random: bool = False,
                                      part: slice = None):
+        """Simplex iterator with dense matrix references and numpy-imported simplex list.
+
+        :argument n: (Optional[int]) number of simplices to build the iterator with.
+        :argument dimension: (int) dimension of simplices to prepare.
+        :parameter random: (bool) whether to randomize simplices selection. Only works with specified n.
+
+        :returns iterator: (iterable) the requested iterator.
+        """
         self._prepare_shared_memory_dense()
         if random:
             self._prepare_random_selection(n, dimension)
@@ -457,7 +487,13 @@ class MPDataManager:
 
         return product(simplex_iterator, [self._full_matrix_info], [self._bid_matrix_info])
 
-    def mp_chunks(self, dimension, chunk_dimension):
+    def mp_chunks(self, dimension: int = 1, chunk_dimension: int = 10000000):
+        """Iterator over big chunks for memory issues.
+
+        :argument dimension: (int) dimension of simplices to load.
+        :argument chunk_dimension: (int) number of simplices to load at once.
+
+        :returns iterator: (iterable) returns simplex iterators of specified dimension."""
         total_length = self._count_file['Cells_'+str(dimension)].shape[0]
         for i in range(np.ceil(total_length/chunk_dimension).astype(int)):
             self._shut_shared_memory()
