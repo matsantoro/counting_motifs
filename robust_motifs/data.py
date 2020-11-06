@@ -17,7 +17,7 @@ def import_connectivity_matrix(path: Path = Path('data/test/cons_locs_pathways_m
                         zones: Optional[List[str]] = None,
                         dataframe: bool = True,
                         type: Optional[str] = None,
-                        pathway_shuffle: bool = False) -> Union[np.ndarray, pd.DataFrame]:
+                        pathway_shuffle: bool = False) -> Union[np.ndarray, pd.DataFrame, sp.csr_matrix]:
     """Imports the connectivity matrix of the BBP model (h5 format)
 
     :argument path: (Path) Path to load the data from.
@@ -199,6 +199,7 @@ def save_count_graph_from_matrix(path: Path, matrix: sp.csr_matrix):
         :returns pickle_path: (Path) pickle file path.
         :returns count_path: (Path) flagser-count h5 file path.
     """
+    path.parent.mkdir(exist_ok=True, parents=True)
     pickle_path = path.with_suffix(".pkl")
     count_path = path.parent / Path(path.stem + "-count.h5")
     write_flagser_file(path, matrix)
@@ -501,3 +502,21 @@ class MPDataManager:
                 dimension=dimension,
                 part=slice(i*chunk_dimension, (i+1)*chunk_dimension)
             )
+
+
+class Pickleizer:
+    def __init__(self, in_path: Path):
+        self.in_path = in_path
+        self.file_list = list(self.in_path.glob("**/*Column.h5"))
+        print("Found " + str(len(self.file_list)) + " files.")
+
+    def pickle_it(self, destination: Path = None):
+        if destination is None:
+            for file_path in self.file_list:
+                m = import_connectivity_matrix(file_path, dataframe=False, type='csr')
+                save_count_graph_from_matrix(file_path.with_suffix(".flag"), m)
+        else:
+            destination.mkdir(exist_ok=True, parents=True)
+            for file_path in self.file_list:
+                m = import_connectivity_matrix(file_path, dataframe=False, type='csr')
+                save_count_graph_from_matrix(destination / file_path.stem / file_path.with_suffix('.flag').name, m)
