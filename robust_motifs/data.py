@@ -35,14 +35,14 @@ def import_connectivity_matrix(path: Path = Path('data/test/cons_locs_pathways_m
     assert np.all([zone in list(file['populations'].keys()) for zone in zones])
     n_elements = []
     for element1 in tqdm(zones):
-        conn_row = sp.csr_matrix(file['connectivity'][element1][zones[0]]['cMat'][:, :], dtype=bool)
+        conn_row = sp.csr_matrix(file['connectivty'][element1][zones[0]]['cMat'][:, :], dtype=bool)
 
         if pathway_shuffle:
             conn_row = matrix_shuffle(conn_row, exclude_diagonal=(element1 is zones[0]))
 
         n_elements += [conn_row.shape[0]]
         for element2 in zones[1:]:
-            block = sp.csr_matrix(file['connectivity'][element1][element2]['cMat'][:, :], dtype=bool)
+            block = sp.csr_matrix(file['connectivty'][element1][element2]['cMat'][:, :], dtype=bool)
 
             if pathway_shuffle:
                 block = matrix_shuffle(block, exclude_diagonal=(element1 is element2))
@@ -519,4 +519,4 @@ class Pickleizer:
             destination.mkdir(exist_ok=True, parents=True)
             for file_path in self.file_list:
                 m = import_connectivity_matrix(file_path, dataframe=False, type='csr')
-                save_count_graph_from_matrix(destination / file_path.stem / file_path.with_suffix('.flag').name, m)
+                save_count_graph_from_matrix(destination / file_path.parent.stem / file_path.stem / file_path.with_suffix('.flag').name, m)
