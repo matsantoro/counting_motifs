@@ -523,11 +523,13 @@ class Pickleizer:
 
 
 def create_test_graphs(n_instances: int, n_nodes: int, density: float, path: Path):
-    for i in range(n_instances):
+    for i in tqdm(range(n_instances)):
         save_path = path / ("seed_" + str(i))
         save_path.mkdir(exist_ok=True, parents=True)
         g = networkx.fast_gnp_random_graph(n_nodes, density, directed=True, seed = i)
         a = networkx.adjacency_matrix(g)
-        save_count_graph_from_matrix(save_path / "graph.flag")
-        
+        b = save_path / "graph.flag"
+        print(b)
+        save_count_graph_from_matrix(b)
+
 
