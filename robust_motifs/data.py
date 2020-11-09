@@ -533,3 +533,22 @@ def create_test_graphs(n_instances: int, n_nodes: int, density: float, path: Pat
         save_count_graph_from_matrix(b, a)
 
 
+def create_control_graphs_from_matrix(n_instances: int, matrix_path: Path, path: Path, type: str, seed: int = 1):
+    np.random.seed(seed)
+    if type == 'full':
+        for n in tqdm(range(n_instances)):
+            m = import_connectivity_matrix(matrix_path, dataframe=False, type = 'csr')
+            m = matrix_shuffle(m, exclude_diagonal=True)
+            save_count_graph_from_matrix(path, m)
+    if type == 'pathways':
+        for n in tqdm(range(n_instances)):
+            m = import_connectivity_matrix(matrix_path, dataframe=False, type='csr', pathway_shuffle=True)
+            save_count_graph_from_matrix(path, m)
+    if type == 'adjusted':
+        for n in tqdm(range(n_instances)):
+            m = import_connectivity_matrix(matrix_path, dataframe=False, type='csr')
+            bm = m.multiply(m.T)
+            m = matrix_shuffle(m, exclude_diagonal=True)
+            m = adjust_bidirectional_edges(m, int(bm.count_nonzero()/2))
+            save_count_graph_from_matrix(path, m)
+
