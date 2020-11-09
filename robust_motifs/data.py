@@ -530,6 +530,6 @@ def create_test_graphs(n_instances: int, n_nodes: int, density: float, path: Pat
         a = networkx.adjacency_matrix(g)
         b = save_path / "graph.flag"
         print(b)
-        save_count_graph_from_matrix(b)
+        save_count_graph_from_matrix(b, a)
 
 
