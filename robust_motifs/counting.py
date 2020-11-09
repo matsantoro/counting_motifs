@@ -430,7 +430,7 @@ class Processor:
                         indptr[count] = indptr[count - 1] + len(element)
                         array[indptr[count - 1]:indptr[count]] = element
                 try:
-                    path1 = elem.with_name("BS_D" + str(dimension) + ".npz")
+                    path1 = elem.with_name("ES_D" + str(dimension) + ".npz")
                     np.savez_compressed(open(path1, 'wb'), array[:indptr[-1]])
                     path2 = path1.with_name(path1.stem + "indptr.npz")
                     np.savez_compressed(open(path2, 'wb'), indptr)
