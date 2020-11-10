@@ -440,7 +440,7 @@ class Processor:
                                     log.write(str(datetime.datetime.now()) + " Array too small. Extending by 20%.")
                                     log.write(str(datetime.datetime.now()) + " Before: " + str(array.nbytes))
                                     array = np.concatenate(
-                                        [array, np.empty(shape=(int(array.shape[0]*0.20),), dtype=np.int16, )]
+                                        [array, np.empty(shape=(int(array.shape[0]*0.20) + 1000,), dtype=np.int16, )]
                                     )
                                     log.write(str(datetime.datetime.now()) + " After: " + str(array.nbytes))
                                     array[indptr[count - 1]:indptr[count]] = element
@@ -507,7 +507,7 @@ class Processor:
                                     log.write(str(datetime.datetime.now()) + " Array too small. Extending by 20%.")
                                     log.write(str(datetime.datetime.now()) + " Before: " + str(array.nbytes))
                                     array = np.concatenate(
-                                        [array, np.empty(shape=(int(array.shape[0] * 0.20),), dtype=np.int16, )]
+                                        [array, np.empty(shape=(int(array.shape[0] * 0.20) + 1000,), dtype=np.int16, )]
                                     )
                                     log.write(str(datetime.datetime.now()) + " After: " + str(array.nbytes))
                                     array[indptr[count - 1]:indptr[count]] = element
