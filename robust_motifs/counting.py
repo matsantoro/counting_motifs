@@ -1,7 +1,9 @@
+import datetime
 import multiprocessing as mp
 from multiprocessing.shared_memory import SharedMemory
 import numpy as np
 from pathlib import Path
+import psutil
 import scipy.sparse as sp
 from tqdm import tqdm
 from typing import Any, Dict, List, Tuple
@@ -409,83 +411,112 @@ class Processor:
     def list_extended_simplices(self):
         """Produces es files for file in path."""
         pool = mp.Pool()
-        print("Found " + str(len(self.file_list)) + " .pkl files.")
+        print("Found " + str(len(self.file_list)) + " .pkl files.\n")
         for elem in tqdm(self.file_list, ):
-            if not elem.with_name("ES_count.npz").exists():
-                motif_counts = np.zeros((7, 2), dtype=int)
-                manager = MPDataManager(elem, None)
-                dimensions = range(1, len(manager._count_file.keys())+1)
-                for dimension in dimensions:
-                    chunked_iterator = manager.mp_chunks(dimension=dimension)
-                    array = np.empty(shape=(manager._count_file['Cells_' + str(dimension)].shape[0] * 15,),
-                                     dtype=np.int16, )
-                    indptr = np.empty(shape=(manager._count_file['Cells_' + str(dimension)].shape[0] + 1,),
-                                      dtype=np.int32, )
-                    indptr[0] = 0
-                    count = 0
-                    for iterator in chunked_iterator:
-
-                        r = pool.imap(get_extended_simplices_dense, iterator, chunksize=5000)
-                        for element in r:
-                            count += 1
-                            indptr[count] = indptr[count - 1] + len(element)
-                            array[indptr[count - 1]:indptr[count]] = element
-                    try:
-                        path1 = elem.with_name("ES_D" + str(dimension) + ".npz")
-                        np.savez_compressed(open(path1, 'wb'), array[:indptr[-1]])
-                        path2 = path1.with_name(path1.stem + "indptr.npz")
-                        np.savez_compressed(open(path2, 'wb'), indptr)
-                    except Exception as e:
-                        print(e)
-                    motif_counts[dimension - 1, 0] = len(indptr) - 1
-                    motif_counts[dimension - 1, 1] = indptr[-1]
-                    del array
-                    del indptr
-                count_path = elem.with_name("ES_count.npz")
-                np.savez_compressed(open(count_path, 'wb'), motif_counts)
-                manager._shut_shared_memory()
-                del manager
-            else:
-                pass
+            with open(elem.with_name('log.txt','a+')) as log:
+                if not elem.with_name("ES_count.npz").exists():
+                    log.write(str(datetime.datetime.now()) + "Starting ES count\n")
+                    motif_counts = np.zeros((7, 2), dtype=int)
+                    manager = MPDataManager(elem, None)
+                    log.write(str(datetime.datetime.now()) + "Instantiated manager\n")
+                    dimensions = range(1, len(manager._count_file.keys())+1)
+                    for dimension in dimensions:
+                        log.write(str(datetime.datetime.now()) + "Started dim " + str(dimension) + "\n")
+                        chunked_iterator = manager.mp_chunks(dimension=dimension)
+                        array = np.empty(shape=(manager._count_file['Cells_' + str(dimension)].shape[0] * 15,),
+                                         dtype=np.int16, )
+                        indptr = np.empty(shape=(manager._count_file['Cells_' + str(dimension)].shape[0] + 1,),
+                                          dtype=np.int32, )
+                        indptr[0] = 0
+                        count = 0
+                        for iterator in chunked_iterator:
+                            r = pool.imap(get_extended_simplices_dense, iterator, chunksize=5000)
+                            for element in r:
+                                count += 1
+                                indptr[count] = indptr[count - 1] + len(element)
+                                array[indptr[count - 1]:indptr[count]] = element
+                        try:
+                            log.write(str(datetime.datetime.now()) + "Counted dim " + str(dimension) + "\n")
+                            path1 = elem.with_name("ES_D" + str(dimension) + ".npz")
+                            np.savez_compressed(open(path1, 'wb'), array[:indptr[-1]])
+                            path2 = path1.with_name(path1.stem + "indptr.npz")
+                            np.savez_compressed(open(path2, 'wb'), indptr)
+                            log.write(str(datetime.datetime.now()) + "Saved dim " + str(dimension)+ "\n")
+                        except Exception as e:
+                            log.write(str(datetime.datetime.now()) + " " + str(e))
+                        motif_counts[dimension - 1, 0] = len(indptr) - 1
+                        motif_counts[dimension - 1, 1] = indptr[-1]
+                        del array
+                        del indptr
+                    count_path = elem.with_name("ES_count.npz")
+                    np.savez_compressed(open(count_path, 'wb'), motif_counts)
+                    log.write(str(datetime.datetime.now()) + "Saved whole count.\n")
+                    log.write(str(datetime.datetime.now()) + "Available memory: " +
+                              str(psutil.virtual_memory().available) +
+                              "  Percent used:" + str(psutil.virtual_memory().available) + "\n")
+                    manager._shut_shared_memory()
+                    del manager
+                    log.write(str(datetime.datetime.now()) + "Shut down memory.\n")
+                    log.write(str(datetime.datetime.now()) + "Available memory: " +
+                              str(psutil.virtual_memory().available) +
+                              "  Percent used:" + str(psutil.virtual_memory().available) + "\n")
+                else:
+                    log.write(str(datetime.datetime.now()) + "Found existing ES count. Skipping...\n")
+                    pass
 
     def list_bisimplices(self):
         """Produces bs files for file in path."""
         pool = mp.Pool()
         print("Found " + str(len(self.file_list)) + " .pkl files.")
         for elem in tqdm(self.file_list, ):
-            if not elem.with_name("BS_count.npz").exists():
-                motif_counts = np.zeros((7, 2), dtype=int)
-                manager = MPDataManager(elem, None)
-                dimensions = range(1, len(manager._count_file.keys())+1)
-                for dimension in dimensions:
-                    chunked_iterator = manager.mp_chunks(dimension=dimension)
-                    array = np.empty(shape=(manager._count_file['Cells_' + str(dimension)].shape[0],),
-                                     dtype=np.int16, )
-                    indptr = np.empty(shape=(manager._count_file['Cells_' + str(dimension)].shape[0] + 1,),
-                                      dtype=np.int32, )
-                    indptr[0] = 0
-                    count = 0
-                    for iterator in chunked_iterator:
+            with open(elem.with_name('log.txt', 'a+')) as log:
+                if not elem.with_name("BS_count.npz").exists():
+                    log.write(str(datetime.datetime.now()) + "Starting BS count\n")
+                    motif_counts = np.zeros((7, 2), dtype=int)
+                    manager = MPDataManager(elem, None)
+                    log.write(str(datetime.datetime.now()) + "Instantiated manager\n")
+                    dimensions = range(1, len(manager._count_file.keys())+1)
+                    for dimension in dimensions:
+                        log.write(str(datetime.datetime.now()) + "Started dim " + str(dimension) + "\n")
+                        chunked_iterator = manager.mp_chunks(dimension=dimension)
+                        array = np.empty(shape=(manager._count_file['Cells_' + str(dimension)].shape[0],),
+                                         dtype=np.int16, )
+                        indptr = np.empty(shape=(manager._count_file['Cells_' + str(dimension)].shape[0] + 1,),
+                                          dtype=np.int32, )
+                        indptr[0] = 0
+                        count = 0
+                        for iterator in chunked_iterator:
 
-                        r = pool.imap(get_bisimplices_dense, iterator, chunksize=5000)
-                        for element in r:
-                            count += 1
-                            indptr[count] = indptr[count - 1] + len(element)
-                            array[indptr[count - 1]:indptr[count]] = element
-                    try:
-                        path1 = elem.with_name("BS_D" + str(dimension) + ".npz")
-                        np.savez_compressed(open(path1, 'wb'), array[:indptr[-1]])
-                        path2 = path1.with_name(path1.stem + "indptr.npz")
-                        np.savez_compressed(open(path2, 'wb'), indptr)
-                    except Exception as e:
-                        print(e)
-                    motif_counts[dimension-1, 0] = len(indptr)-1
-                    motif_counts[dimension-1, 1] = indptr[-1]
-                    del array
-                    del indptr
-                count_path = elem.with_name("BS_count.npz")
-                np.savez_compressed(open(count_path, 'wb'), motif_counts)
-                manager._shut_shared_memory()
-                del manager
-            else:
-                pass
+                            r = pool.imap(get_bisimplices_dense, iterator, chunksize=5000)
+                            for element in r:
+                                count += 1
+                                indptr[count] = indptr[count - 1] + len(element)
+                                array[indptr[count - 1]:indptr[count]] = element
+                        try:
+                            log.write(str(datetime.datetime.now()) + "Counted dim " + str(dimension) + "\n")
+                            path1 = elem.with_name("BS_D" + str(dimension) + ".npz")
+                            np.savez_compressed(open(path1, 'wb'), array[:indptr[-1]])
+                            path2 = path1.with_name(path1.stem + "indptr.npz")
+                            np.savez_compressed(open(path2, 'wb'), indptr)
+                            log.write(str(datetime.datetime.now()) + "Saved dim " + str(dimension) + "\n")
+                        except Exception as e:
+                            print(e)
+                        motif_counts[dimension-1, 0] = len(indptr)-1
+                        motif_counts[dimension-1, 1] = indptr[-1]
+                        del array
+                        del indptr
+                    count_path = elem.with_name("BS_count.npz")
+                    np.savez_compressed(open(count_path, 'wb'), motif_counts)
+                    log.write(str(datetime.datetime.now()) + "Saved whole count.\n")
+                    log.write(str(datetime.datetime.now()) + "Available memory: " +
+                              str(psutil.virtual_memory().available) +
+                              "  Percent used:" + str(psutil.virtual_memory().available) + "\n")
+                    manager._shut_shared_memory()
+                    del manager
+                    log.write(str(datetime.datetime.now()) + "Shut down memory.\n")
+                    log.write(str(datetime.datetime.now()) + "Available memory: " +
+                              str(psutil.virtual_memory().available) +
+                              "  Percent used:" + str(psutil.virtual_memory().available) + "\n")
+                else:
+                    log.write(str(datetime.datetime.now()) + "Found existing BS count. Skipping...\n")
+                    pass
