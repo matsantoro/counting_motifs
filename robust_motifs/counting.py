@@ -413,15 +413,15 @@ class Processor:
         pool = mp.Pool()
         print("Found " + str(len(self.file_list)) + " .pkl files.\n")
         for elem in tqdm(self.file_list, ):
-            with open(elem.with_name('log.txt','a+')) as log:
+            with open(elem.with_name('log.txt'),'a+') as log:
                 if not elem.with_name("ES_count.npz").exists():
-                    log.write(str(datetime.datetime.now()) + "Starting ES count\n")
+                    log.write(str(datetime.datetime.now()) + " Starting ES count\n")
                     motif_counts = np.zeros((7, 2), dtype=int)
                     manager = MPDataManager(elem, None)
-                    log.write(str(datetime.datetime.now()) + "Instantiated manager\n")
+                    log.write(str(datetime.datetime.now()) + " Instantiated manager\n")
                     dimensions = range(1, len(manager._count_file.keys())+1)
                     for dimension in dimensions:
-                        log.write(str(datetime.datetime.now()) + "Started dim " + str(dimension) + "\n")
+                        log.write(str(datetime.datetime.now()) + " Started dim " + str(dimension) + "\n")
                         chunked_iterator = manager.mp_chunks(dimension=dimension)
                         array = np.empty(shape=(manager._count_file['Cells_' + str(dimension)].shape[0] * 15,),
                                          dtype=np.int16, )
@@ -436,12 +436,12 @@ class Processor:
                                 indptr[count] = indptr[count - 1] + len(element)
                                 array[indptr[count - 1]:indptr[count]] = element
                         try:
-                            log.write(str(datetime.datetime.now()) + "Counted dim " + str(dimension) + "\n")
+                            log.write(str(datetime.datetime.now()) + " Counted dim " + str(dimension) + "\n")
                             path1 = elem.with_name("ES_D" + str(dimension) + ".npz")
                             np.savez_compressed(open(path1, 'wb'), array[:indptr[-1]])
                             path2 = path1.with_name(path1.stem + "indptr.npz")
                             np.savez_compressed(open(path2, 'wb'), indptr)
-                            log.write(str(datetime.datetime.now()) + "Saved dim " + str(dimension)+ "\n")
+                            log.write(str(datetime.datetime.now()) + " Saved dim " + str(dimension)+ "\n")
                         except Exception as e:
                             log.write(str(datetime.datetime.now()) + " " + str(e))
                         motif_counts[dimension - 1, 0] = len(indptr) - 1
@@ -450,18 +450,18 @@ class Processor:
                         del indptr
                     count_path = elem.with_name("ES_count.npz")
                     np.savez_compressed(open(count_path, 'wb'), motif_counts)
-                    log.write(str(datetime.datetime.now()) + "Saved whole count.\n")
-                    log.write(str(datetime.datetime.now()) + "Available memory: " +
+                    log.write(str(datetime.datetime.now()) + " Saved whole count.\n")
+                    log.write(str(datetime.datetime.now()) + " Available memory: " +
                               str(psutil.virtual_memory().available) +
-                              "  Percent used:" + str(psutil.virtual_memory().available) + "\n")
+                              "  Percent used:" + str(psutil.virtual_memory().percent) + "\n")
                     manager._shut_shared_memory()
                     del manager
-                    log.write(str(datetime.datetime.now()) + "Shut down memory.\n")
-                    log.write(str(datetime.datetime.now()) + "Available memory: " +
+                    log.write(str(datetime.datetime.now()) + " Shut down memory.\n")
+                    log.write(str(datetime.datetime.now()) + " Available memory: " +
                               str(psutil.virtual_memory().available) +
-                              "  Percent used:" + str(psutil.virtual_memory().available) + "\n")
+                              "  Percent used:" + str(psutil.virtual_memory().percent) + "\n")
                 else:
-                    log.write(str(datetime.datetime.now()) + "Found existing ES count. Skipping...\n")
+                    log.write(str(datetime.datetime.now()) + " Found existing ES count. Skipping...\n")
                     pass
 
     def list_bisimplices(self):
@@ -469,15 +469,15 @@ class Processor:
         pool = mp.Pool()
         print("Found " + str(len(self.file_list)) + " .pkl files.")
         for elem in tqdm(self.file_list, ):
-            with open(elem.with_name('log.txt', 'a+')) as log:
+            with open(elem.with_name('log.txt'), 'a+') as log:
                 if not elem.with_name("BS_count.npz").exists():
-                    log.write(str(datetime.datetime.now()) + "Starting BS count\n")
+                    log.write(str(datetime.datetime.now()) + " Starting BS count\n")
                     motif_counts = np.zeros((7, 2), dtype=int)
                     manager = MPDataManager(elem, None)
-                    log.write(str(datetime.datetime.now()) + "Instantiated manager\n")
+                    log.write(str(datetime.datetime.now()) + " Instantiated manager\n")
                     dimensions = range(1, len(manager._count_file.keys())+1)
                     for dimension in dimensions:
-                        log.write(str(datetime.datetime.now()) + "Started dim " + str(dimension) + "\n")
+                        log.write(str(datetime.datetime.now()) + " Started dim " + str(dimension) + "\n")
                         chunked_iterator = manager.mp_chunks(dimension=dimension)
                         array = np.empty(shape=(manager._count_file['Cells_' + str(dimension)].shape[0],),
                                          dtype=np.int16, )
@@ -493,12 +493,12 @@ class Processor:
                                 indptr[count] = indptr[count - 1] + len(element)
                                 array[indptr[count - 1]:indptr[count]] = element
                         try:
-                            log.write(str(datetime.datetime.now()) + "Counted dim " + str(dimension) + "\n")
+                            log.write(str(datetime.datetime.now()) + " Counted dim " + str(dimension) + "\n")
                             path1 = elem.with_name("BS_D" + str(dimension) + ".npz")
                             np.savez_compressed(open(path1, 'wb'), array[:indptr[-1]])
                             path2 = path1.with_name(path1.stem + "indptr.npz")
                             np.savez_compressed(open(path2, 'wb'), indptr)
-                            log.write(str(datetime.datetime.now()) + "Saved dim " + str(dimension) + "\n")
+                            log.write(str(datetime.datetime.now()) + " Saved dim " + str(dimension) + "\n")
                         except Exception as e:
                             print(e)
                         motif_counts[dimension-1, 0] = len(indptr)-1
@@ -507,16 +507,16 @@ class Processor:
                         del indptr
                     count_path = elem.with_name("BS_count.npz")
                     np.savez_compressed(open(count_path, 'wb'), motif_counts)
-                    log.write(str(datetime.datetime.now()) + "Saved whole count.\n")
-                    log.write(str(datetime.datetime.now()) + "Available memory: " +
+                    log.write(str(datetime.datetime.now()) + " Saved whole count.\n")
+                    log.write(str(datetime.datetime.now()) + " Available memory: " +
                               str(psutil.virtual_memory().available) +
-                              "  Percent used:" + str(psutil.virtual_memory().available) + "\n")
+                              "  Percent used:" + str(psutil.virtual_memory().percent) + "\n")
                     manager._shut_shared_memory()
                     del manager
-                    log.write(str(datetime.datetime.now()) + "Shut down memory.\n")
-                    log.write(str(datetime.datetime.now()) + "Available memory: " +
+                    log.write(str(datetime.datetime.now()) + " Shut down memory.\n")
+                    log.write(str(datetime.datetime.now()) + " Available memory: " +
                               str(psutil.virtual_memory().available) +
-                              "  Percent used:" + str(psutil.virtual_memory().available) + "\n")
+                              "  Percent used:" + str(psutil.virtual_memory().percent) + "\n")
                 else:
-                    log.write(str(datetime.datetime.now()) + "Found existing BS count. Skipping...\n")
+                    log.write(str(datetime.datetime.now()) + " Found existing BS count. Skipping...\n")
                     pass
