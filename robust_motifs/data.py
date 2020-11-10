@@ -503,6 +503,51 @@ class MPDataManager:
                 part=slice(i*chunk_dimension, (i+1)*chunk_dimension)
             )
 
+    def worker_init_dense(self):
+        def initializer():
+            global global_bid_matrix
+            global_bid_matrix = self._bid_matrix.todense().copy()
+            global global_matrix
+            global_matrix = self._matrix.todense().copy()
+
+        return initializer
+
+    def worker_init_sparse(self):
+        def initializer():
+            global global_bid_matrix
+            global_bid_matrix = self._bid_matrix.copy()
+            global global_matrix
+            global_matrix = self._matrix.copy()
+
+    def mp_np_clean_simplex_iterator(self, n: Optional[int] = None, dimension: int = 1, random: bool = False,
+                                     part: slice = None):
+        if random:
+            self._prepare_random_selection(n, dimension)
+            simplex_iterator = np.array(self._count_file['Cells_' + str(dimension)][self._random_selection])
+        else:
+            if n:
+                simplex_iterator = np.array(self._count_file['Cells_' + str(dimension)][:n])
+            elif part:
+                simplex_iterator = np.array(self._count_file['Cells_' + str(dimension)])[part]
+            else:
+                simplex_iterator = np.array(self._count_file['Cells_' + str(dimension)])
+
+        return simplex_iterator
+
+    def mp_clean_chunks(self, dimension: int = 1, chunk_dimension: int = 10000000):
+        """Iterator over big chunks for memory issues.
+
+        :argument dimension: (int) dimension of simplices to load.
+        :argument chunk_dimension: (int) number of simplices to load at once.
+
+        :returns iterator: (iterable) returns simplex iterators of specified dimension."""
+        total_length = self._count_file['Cells_'+str(dimension)].shape[0]
+        for i in range(np.ceil(total_length/chunk_dimension).astype(int)):
+            yield self.mp_np_clean_simplex_iterator(
+                dimension=dimension,
+                part=slice(i*chunk_dimension, (i+1)*chunk_dimension)
+            )
+
 
 class Pickleizer:
     def __init__(self, in_path: Path):
