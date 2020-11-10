@@ -434,7 +434,17 @@ class Processor:
                             for element in r:
                                 count += 1
                                 indptr[count] = indptr[count - 1] + len(element)
-                                array[indptr[count - 1]:indptr[count]] = element
+                                try:
+                                    array[indptr[count - 1]:indptr[count]] = element
+                                except ValueError:
+                                    log.write(str(datetime.datetime.now()) + " Array too small. Extending by 20%.")
+                                    log.write(str(datetime.datetime.now()) + " Before: " + str(array.nbytes))
+                                    array = np.concatenate(
+                                        [array, np.empty(shape=(int(array.shape[0]*0.20),), dtype=np.int16, )]
+                                    )
+                                    log.write(str(datetime.datetime.now()) + " After: " + str(array.nbytes))
+                                    array[indptr[count - 1]:indptr[count]] = element
+
                         try:
                             log.write(str(datetime.datetime.now()) + " Counted dim " + str(dimension) + "\n")
                             path1 = elem.with_name("ES_D" + str(dimension) + ".npz")
@@ -491,7 +501,16 @@ class Processor:
                             for element in r:
                                 count += 1
                                 indptr[count] = indptr[count - 1] + len(element)
-                                array[indptr[count - 1]:indptr[count]] = element
+                                try:
+                                    array[indptr[count - 1]:indptr[count]] = element
+                                except ValueError:
+                                    log.write(str(datetime.datetime.now()) + " Array too small. Extending by 20%.")
+                                    log.write(str(datetime.datetime.now()) + " Before: " + str(array.nbytes))
+                                    array = np.concatenate(
+                                        [array, np.empty(shape=(int(array.shape[0] * 0.20),), dtype=np.int16, )]
+                                    )
+                                    log.write(str(datetime.datetime.now()) + " After: " + str(array.nbytes))
+                                    array[indptr[count - 1]:indptr[count]] = element
                         try:
                             log.write(str(datetime.datetime.now()) + " Counted dim " + str(dimension) + "\n")
                             path1 = elem.with_name("BS_D" + str(dimension) + ".npz")
