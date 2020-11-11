@@ -13,7 +13,7 @@ from .data import MPDataManager, load_sparse_matrix_from_pkl
 
 
 def worker_initializer(path):
-    print("Initializing on PID" + str(os.getppid()))
+    print("Initializing on PID" + str(os.getpid()))
     global global_matrix
     global global_bid_matrix
     global_matrix = load_sparse_matrix_from_pkl(path)
