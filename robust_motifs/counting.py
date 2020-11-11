@@ -610,7 +610,7 @@ class ProcessorClean:
                     motif_counts = np.zeros((7, 2), dtype=int)
                     manager = MPDataManager(elem, None)
                     initializer, path = manager.worker_init_from_file()
-                    pool = mp.Pool(initializer=initializer, initargs=path)
+                    pool = mp.Pool(initializer=initializer, initargs=(path,))
                     log.write(str(datetime.datetime.now()) + " Instantiated manager and pool\n")
                     dimensions = range(1, len(manager._count_file.keys())+1)
                     for dimension in dimensions:
@@ -677,7 +677,7 @@ class ProcessorClean:
                     motif_counts = np.zeros((7, 2), dtype=int)
                     manager = MPDataManager(elem, None)
                     initializer, path = manager.worker_init_from_file()
-                    pool = mp.Pool(initializer=initializer, initargs=path)
+                    pool = mp.Pool(initializer=initializer, initargs=(path,))
                     log.write(str(datetime.datetime.now()) + " Instantiated manager and pool\n")
                     dimensions = range(1, len(manager._count_file.keys())+1)
                     for dimension in dimensions:
