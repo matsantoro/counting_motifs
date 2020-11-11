@@ -505,6 +505,7 @@ class MPDataManager:
 
     def worker_init_dense(self):
         def initializer():
+            print("Initializing on PID " + str(os.getppid()))
             global global_bid_matrix
             global_bid_matrix = self._bid_matrix.todense().copy()
             global global_matrix
@@ -514,10 +515,13 @@ class MPDataManager:
 
     def worker_init_sparse(self):
         def initializer():
+            print("Initializing on PID " + str(os.getppid()))
             global global_bid_matrix
             global_bid_matrix = self._bid_matrix.copy()
             global global_matrix
             global_matrix = self._matrix.copy()
+
+        return initializer
 
     def mp_np_clean_simplex_iterator(self, n: Optional[int] = None, dimension: int = 1, random: bool = False,
                                      part: slice = None):
