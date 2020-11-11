@@ -569,7 +569,7 @@ class Processor:
                             np.savez_compressed(open(path2, 'wb'), indptr)
                             log.write(str(datetime.datetime.now()) + " Saved dim " + str(dimension) + "\n")
                         except Exception as e:
-                            print(e)
+                            log.write(str(datetime.datetime.now()) + " " + str(e))
                         motif_counts[dimension-1, 0] = len(indptr)-1
                         motif_counts[dimension-1, 1] = indptr[-1]
                         del array

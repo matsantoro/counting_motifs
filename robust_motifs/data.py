@@ -336,7 +336,7 @@ def retrieve_indices(pop: str, neuron_data: pd.DataFrame) -> np.array:
 class MPDataManager:
     """Class to produce iterators ready for multiprocessing from data.
 
-    :arumgent path: (pathlib.Path) reference path for the manager. Data will be laoded from here if
+    :argument path: (pathlib.Path) reference path for the manager. Data will be laoded from here if
         it exists, or saved here if not. Each folder will be populated with the adjacency matrix in both
         .pkl and .flag format, and the h5 count file.
     :argument matrix: (sp.csr_matrix) adjacency matrix in sparse format."""
@@ -385,6 +385,8 @@ class MPDataManager:
             print("Could not open count file " + str(self._count_path))
             print(message)
 
+        self._bid_matrix = self._matrix.multiply(self._matrix.T)
+
     def __del__(self):
         self._shut_shared_memory()
 
@@ -399,7 +401,6 @@ class MPDataManager:
         """Prepare shared memory with necessary sparse matrices."""
         try:
             self._full_matrix_info, self._full_matrix_link = prepare_shared_memory(self._matrix, 'full')
-            self._bid_matrix = self._matrix.multiply(self._matrix.T)
             self._bid_matrix_info, self._bid_matrix_link = prepare_shared_memory(self._bid_matrix, 'bid')
         except FileExistsError:
             pass
@@ -408,7 +409,6 @@ class MPDataManager:
         """Prepare shared memory with necessary dense matrices."""
         try:
             self._full_matrix_info, self._full_matrix_link = share_dense_matrix(np.array(self._matrix.todense()))
-            self._bid_matrix = self._matrix.multiply(self._matrix.T)
             self._bid_matrix_info, self._bid_matrix_link = share_dense_matrix(np.array(self._bid_matrix.todense()))
         except FileExistsError:
             pass
