@@ -609,7 +609,8 @@ class ProcessorClean:
                     log.write(str(datetime.datetime.now()) + " Starting ES count\n")
                     motif_counts = np.zeros((7, 2), dtype=int)
                     manager = MPDataManager(elem, None)
-                    pool = mp.Pool(initializer=manager.worker_init_dense())
+                    initializer, path = manager.worker_init_from_file()
+                    pool = mp.Pool(initializer=initializer, initargs=path)
                     log.write(str(datetime.datetime.now()) + " Instantiated manager and pool\n")
                     dimensions = range(1, len(manager._count_file.keys())+1)
                     for dimension in dimensions:
@@ -675,7 +676,8 @@ class ProcessorClean:
                     log.write(str(datetime.datetime.now()) + " Starting BS count\n")
                     motif_counts = np.zeros((7, 2), dtype=int)
                     manager = MPDataManager(elem, None)
-                    pool = mp.Pool(initializer=manager.worker_init_dense())
+                    initializer, path = manager.worker_init_from_file()
+                    pool = mp.Pool(initializer=initializer, initargs=path)
                     log.write(str(datetime.datetime.now()) + " Instantiated manager and pool\n")
                     dimensions = range(1, len(manager._count_file.keys())+1)
                     for dimension in dimensions:

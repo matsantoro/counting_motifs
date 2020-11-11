@@ -358,7 +358,6 @@ class MPDataManager:
             elif path.suffix == ".pkl":
                 try:
                     self._matrix = load_sparse_matrix_from_pkl(path)
-
                     self._flagser_path = path.with_suffix(".flag")
                     self._pickle_path = path
                     self._count_path = path.with_name(path.stem + "-count.h5")
@@ -522,6 +521,18 @@ class MPDataManager:
             global_matrix = self._matrix.copy()
 
         return initializer
+
+    def worker_init_from_file(self):
+        def initializer(path):
+            print("Initializing on PID" + str(os.getppid()))
+            global global_matrix
+            global global_bid_matrix
+            global_matrix = load_sparse_matrix_from_pkl(path)
+            global_bid_matrix = global_matrix.multiply(global_matrix.T)
+            global_matrix = global_matrix.todense()
+            global_bid_matrix = global_bid_matrix.todense()
+
+        return initializer, self._pickle_path
 
     def mp_np_clean_simplex_iterator(self, n: Optional[int] = None, dimension: int = 1, random: bool = False,
                                      part: slice = None):
