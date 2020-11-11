@@ -2,13 +2,24 @@ import datetime
 import multiprocessing as mp
 from multiprocessing.shared_memory import SharedMemory
 import numpy as np
+import os
 from pathlib import Path
 import psutil
 import scipy.sparse as sp
 from tqdm import tqdm
 from typing import Any, Dict, List, Tuple
 
-from .data import MPDataManager, load_sparse_matrix_from_pkl, worker_initializer
+from .data import MPDataManager, load_sparse_matrix_from_pkl
+
+
+def worker_initializer(path):
+    print("Initializing on PID" + str(os.getppid()))
+    global global_matrix
+    global global_bid_matrix
+    global_matrix = load_sparse_matrix_from_pkl(path)
+    global_bid_matrix = global_matrix.multiply(global_matrix.T)
+    global_matrix = global_matrix.todense()
+    global_bid_matrix = global_bid_matrix.todense()
 
 
 def get_bidirectional_targets(data: Tuple[List, Dict]):

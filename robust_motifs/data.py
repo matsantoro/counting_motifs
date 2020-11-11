@@ -604,11 +604,3 @@ def create_control_graphs_from_matrix(n_instances: int, matrix_path: Path, path:
             save_count_graph_from_matrix(save_path, m)
 
 
-def worker_initializer(path):
-    print("Initializing on PID" + str(os.getppid()))
-    global global_matrix
-    global global_bid_matrix
-    global_matrix = load_sparse_matrix_from_pkl(path)
-    global_bid_matrix = global_matrix.multiply(global_matrix.T)
-    global_matrix = global_matrix.todense()
-    global_bid_matrix = global_bid_matrix.todense()
