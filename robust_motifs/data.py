@@ -522,18 +522,6 @@ class MPDataManager:
 
         return initializer
 
-    def worker_init_from_file(self):
-        def initializer(path):
-            print("Initializing on PID" + str(os.getppid()))
-            global global_matrix
-            global global_bid_matrix
-            global_matrix = load_sparse_matrix_from_pkl(path)
-            global_bid_matrix = global_matrix.multiply(global_matrix.T)
-            global_matrix = global_matrix.todense()
-            global_bid_matrix = global_bid_matrix.todense()
-
-        return initializer, self._pickle_path
-
     def mp_np_clean_simplex_iterator(self, n: Optional[int] = None, dimension: int = 1, random: bool = False,
                                      part: slice = None):
         if random:
@@ -615,3 +603,12 @@ def create_control_graphs_from_matrix(n_instances: int, matrix_path: Path, path:
             save_path = path / ("seed_"+str(n)) / "graph.flag"
             save_count_graph_from_matrix(save_path, m)
 
+
+def worker_initializer(path):
+    print("Initializing on PID" + str(os.getppid()))
+    global global_matrix
+    global global_bid_matrix
+    global_matrix = load_sparse_matrix_from_pkl(path)
+    global_bid_matrix = global_matrix.multiply(global_matrix.T)
+    global_matrix = global_matrix.todense()
+    global_bid_matrix = global_bid_matrix.todense()

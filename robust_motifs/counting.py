@@ -8,7 +8,7 @@ import scipy.sparse as sp
 from tqdm import tqdm
 from typing import Any, Dict, List, Tuple
 
-from .data import MPDataManager, load_sparse_matrix_from_pkl
+from .data import MPDataManager, load_sparse_matrix_from_pkl, worker_initializer
 
 
 def get_bidirectional_targets(data: Tuple[List, Dict]):
@@ -609,8 +609,7 @@ class ProcessorClean:
                     log.write(str(datetime.datetime.now()) + " Starting ES count\n")
                     motif_counts = np.zeros((7, 2), dtype=int)
                     manager = MPDataManager(elem, None)
-                    initializer, path = manager.worker_init_from_file()
-                    pool = mp.Pool(initializer=initializer, initargs=(path,))
+                    pool = mp.Pool(initializer=worker_initializer, initargs=(manager._pickle_path,))
                     log.write(str(datetime.datetime.now()) + " Instantiated manager and pool\n")
                     dimensions = range(1, len(manager._count_file.keys())+1)
                     for dimension in dimensions:
@@ -676,8 +675,7 @@ class ProcessorClean:
                     log.write(str(datetime.datetime.now()) + " Starting BS count\n")
                     motif_counts = np.zeros((7, 2), dtype=int)
                     manager = MPDataManager(elem, None)
-                    initializer, path = manager.worker_init_from_file()
-                    pool = mp.Pool(initializer=initializer, initargs=(path,))
+                    pool = mp.Pool(initializer=worker_initializer, initargs=(manager._pickle_path,))
                     log.write(str(datetime.datetime.now()) + " Instantiated manager and pool\n")
                     dimensions = range(1, len(manager._count_file.keys())+1)
                     for dimension in dimensions:
