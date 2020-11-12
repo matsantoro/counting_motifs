@@ -624,7 +624,7 @@ class ResultManager:
         for file in self.processed_file_list:
             es_count = np.load(file/"ES_count.npz")['arr_0']
             for dim, elem in enumerate(es_count):
-                df.append({"count": elem, "dim": dim, "group": group})
+                df.append({"count": elem, "dim": dim, "group": group}, ignore_index = True)
         return df
 
     def get_ES_count(self, file: Path, dimension: int):
