@@ -624,16 +624,16 @@ class ResultManager:
         for file in self.processed_file_list:
             es_count = np.load(file / "ES_count.npz")['arr_0']
             for dim, elem in enumerate(es_count[:, 1].tolist()):
-                a.append([elem, dim+1, group, "ES"])
+                a.append([elem, int(dim+1), group, "ES"])
             for dim, elem in enumerate(es_count[:, 0].tolist()):
-                a.append([elem, dim+1, group, "S"])
+                a.append([elem, int(dim+1), group, "S"])
             for dim, elem in enumerate(np.nan_to_num(es_count[:, 1]/es_count[:, 0]).tolist()):
-                a.append([elem, dim+1, group, "RES"])
+                a.append([elem, int(dim+1), group, "RES"])
             bs_count = np.load(file / "BS_count.npz")['arr_0']
             for dim, elem in enumerate(bs_count[:, 1].tolist()):
-                a.append([elem, dim+1, group, "BS"])
+                a.append([elem, int(dim+1), group, "BS"])
             for dim, elem in enumerate(np.nan_to_num(bs_count[:, 1] / bs_count[:, 0]).tolist()):
-                a.append([elem, dim+1, group, "RBS"])
+                a.append([elem, int(dim+1), group, "RBS"])
         return pd.DataFrame(a, columns=["count", "dim", "group", "motif"])
 
     def get_ES_count(self, file: Path, dimension: int):
