@@ -620,11 +620,11 @@ class ResultManager:
         return es_counts, bs_counts
 
     def get_counts_dataframe(self, group: str):
-        df = pd.DataFrame()
+        df = pd.DataFrame(columns=["count", "dim", "group", "motif"])
         for file in self.processed_file_list:
             es_count = np.load(file / "ES_count.npz")['arr_0']
             for dim, elem in enumerate(es_count[:, 1].tolist()):
-                df.append({"count": elem, "dim": dim, "group": group}, ignore_index=True)
+                df.append({"count": elem, "dim": dim, "group": group, "motif": "ES"}, ignore_index=True)
         return df
 
     def get_ES_count(self, file: Path, dimension: int):
