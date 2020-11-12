@@ -604,3 +604,25 @@ def create_control_graphs_from_matrix(n_instances: int, matrix_path: Path, path:
             save_count_graph_from_matrix(save_path, m)
 
 
+class ResultManager:
+    def __init__(self, path: Path):
+        self.processed_file_list = []
+        for file in path.glob("**/ES_count.npz"):
+            self.processed_file_list.append(file.parent)
+
+    @property
+    def counts(self):
+        es_counts = []
+        bs_counts = []
+        for file in self.processed_file_list:
+            es_counts.append(np.load(file / "ES_count.npz"))
+            bs_counts.append(np.load(file / "BS_count.npz"))
+        return es_counts, bs_counts
+
+    def get_ES_count(self, file: Path, dimension: int):
+        p1 = file / "ES_D" + str(dimension) + ".npz"
+        return np.load(p1), np.load(p1.with_name(p1.stem + "indptr.npz"))
+
+    def get_BS_count(self, file: Path, dimension: int):
+        p1 = file / "BS_D" + str(dimension) + ".npz"
+        return np.load(p1), np.load(p1.with_name(p1.stem + "indptr.npz"))
