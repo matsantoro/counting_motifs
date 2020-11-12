@@ -619,8 +619,7 @@ class ResultManager:
             bs_counts.append(np.load(file / "BS_count.npz")['arr_0'])
         return es_counts, bs_counts
 
-    @property
-    def counts_dataframe(self, group: str):
+    def get_counts_dataframe(self, group: str):
         df = pd.DataFrame()
         for file in self.processed_file_list:
             es_count = np.load(file/"ES_count.npz")['arr_0']
