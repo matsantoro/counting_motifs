@@ -622,24 +622,39 @@ class ResultManager:
     def get_counts_dataframe(self, group: str):
         a = []
         for file in self.processed_file_list:
+            try:
+                matrix_path = file / (file.parts[-1] + ".pkl")
+                m = load_sparse_matrix_from_pkl(matrix_path)
+            except:
+                matrix_path = file / "graph.pkl"
+                m = load_sparse_matrix_from_pkl(matrix_path)
+            bm = m.multiply(m.T)
             es_count = np.load(file / "ES_count.npz")['arr_0']
             for dim, elem in enumerate(es_count[:, 1].tolist()):
-                a.append([elem, int(dim+1), group, "ES"])
+                a.append([elem, int(dim+1), group, "ES",str(file)])
             for dim, elem in enumerate(es_count[:, 0].tolist()):
-                a.append([elem, int(dim+1), group, "S"])
+                a.append([elem, int(dim+1), group, "S",str(file)])
             for dim, elem in enumerate(np.nan_to_num(es_count[:, 1]/es_count[:, 0]).tolist()):
-                a.append([elem, int(dim+1), group, "RES"])
+                a.append([elem, int(dim+1), group, "RES",str(file)])
             bs_count = np.load(file / "BS_count.npz")['arr_0']
             for dim, elem in enumerate(bs_count[:, 1].tolist()):
-                a.append([elem, int(dim+1), group, "BS"])
+                a.append([elem, int(dim+1), group, "BS", str(file)])
             for dim, elem in enumerate(np.nan_to_num(bs_count[:, 1] / bs_count[:, 0]).tolist()):
-                a.append([elem, int(dim+1), group, "RBS"])
-        return pd.DataFrame(a, columns=["count", "dim", "group", "motif"])
+                a.append([elem, int(dim+1), group, "RBS", str(file)])
+            for dim, elem in enumerate((
+                    np.concatenate([np.array([bm.count_nonzero()]),bs_count[:, 1]])[:-1] / bs_count[:,0]
+                    ).tolist()):
+                a.append([elem, int(dim+1), group, "RBS+", str(file)])
+            for dim, elem in enumerate((
+                    np.concatenate([np.array([bm.count_nonzero()]),es_count[:, 1]])[:-1] / es_count[:,0]
+                    ).tolist()):
+                a.append([elem, int(dim+1), group, "RES+", str(file)])
+        return pd.DataFrame(a, columns=["count", "dim", "group", "motif", "filename"])
 
     def get_ES_count(self, file: Path, dimension: int):
         p1 = file / "ES_D" + str(dimension) + ".npz"
-        return np.load(p1), np.load(p1.with_name(p1.stem + "indptr.npz")['arr_0'])
+        return np.load(p1)['arr_0'], np.load(p1.with_name(p1.stem + "indptr.npz")['arr_0'])
 
     def get_BS_count(self, file: Path, dimension: int):
         p1 = file / "BS_D" + str(dimension) + ".npz"
-        return np.load(p1), np.load(p1.with_name(p1.stem + "indptr.npz")['arr_0'])
+        return np.load(p1)['arr_0'], np.load(p1.with_name(p1.stem + "indptr.npz")['arr_0'])
