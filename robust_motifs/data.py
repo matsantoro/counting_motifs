@@ -643,14 +643,14 @@ class ResultManager:
                 a.append([elem, int(dim+2), group, "RES",str(file)])
             bs_count = np.load(file / "BS_count.npz")['arr_0']
             for dim, elem in enumerate(bs_count[:, 1].tolist()):
-                a.append([elem, int(dim+2), group, "BS", str(file)])
+                a.append([elem/2, int(dim+2), group, "BS", str(file)])
             for dim, elem in enumerate(np.nan_to_num(bs_count[:, 1] / bs_count[:, 0]).tolist()):
-                a.append([elem, int(dim+2), group, "RBS", str(file)])
+                a.append([elem/2, int(dim+2), group, "RBS", str(file)])
 
             for dim, elem in enumerate((
                     np.concatenate([np.array([bm.count_nonzero()]),bs_count[:, 1]])[:-1] / bs_count[:,0]
                     ).tolist()):
-                a.append([elem, int(dim+1), group, "RBS+", str(file)])
+                a.append([elem/2, int(dim+1), group, "RBS+", str(file)])
             for dim, elem in enumerate((
                     np.concatenate([np.array([bm.count_nonzero()]),es_count[:, 1]])[:-1] / es_count[:,0]
                     ).tolist()):
