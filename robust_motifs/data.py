@@ -667,7 +667,7 @@ class ResultManager:
         return np.load(p1)['arr_0'], np.load(p1.with_name(p1.stem + "indptr.npz"))['arr_0']
 
     def get_vertex_es_count(self, file: Path, dimension: int):
-        p1 = file / ("ES_D" + str(dimension) + ".npz")
+        p1 = file / ("ES_D" + str(dimension) + "indptr.npz")
         ends = np.load(p1)['arr_0']
 
         try:
@@ -686,13 +686,13 @@ class ResultManager:
         diffs = ends[1:] - ends[:-1]
         vertex_es_count = np.empty((m.shape[0],))
 
-        for i, simplex in enumerate(simplex_list):
+        for i, simplex in tqdm(enumerate(simplex_list)):
             vertex_es_count[simplex[-1]] += diffs[i]
 
         return vertex_es_count
 
     def get_vertex_bs_count(self, file: Path, dimension: int):
-        p1 = file / ("BS_D" + str(dimension) + ".npz")
+        p1 = file / ("BS_D" + str(dimension) + "indptr.npz")
         ends = np.load(p1)['arr_0']
 
         try:
@@ -711,7 +711,7 @@ class ResultManager:
         diffs = ends[1:] - ends[:-1]
         vertex_bs_count = np.zeros((m.shape[0],))
 
-        for i, simplex in enumerate(simplex_list):
+        for i, simplex in tqdm(enumerate(simplex_list)):
             vertex_bs_count[simplex[-1]] += diffs[i]
 
         return vertex_bs_count
