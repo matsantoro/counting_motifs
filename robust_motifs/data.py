@@ -665,3 +665,53 @@ class ResultManager:
     def get_BS_count(self, file: Path, dimension: int):
         p1 = file / ("BS_D" + str(dimension) + ".npz")
         return np.load(p1)['arr_0'], np.load(p1.with_name(p1.stem + "indptr.npz"))['arr_0']
+
+    def get_vertex_es_count(self, file: Path, dimension: int):
+        p1 = file / ("ES_D" + str(dimension) + ".npz")
+        ends = np.load(p1)['arr_0']
+
+        try:
+            matrix_path = file / (file.parts[-1] + ".pkl")
+            m = load_sparse_matrix_from_pkl(matrix_path)
+
+        except:
+            matrix_path = file / "graph.pkl"
+            m = load_sparse_matrix_from_pkl(matrix_path)
+
+        complex_file_path = matrix_path.with_name(matrix_path.stem + "-count.h5")
+        complex_file = h5py.File(complex_file_path)
+
+        simplex_list = np.array(complex_file['Cells_' + str(dimension)])
+
+        diffs = ends[1:] - ends[:-1]
+        vertex_es_count = np.empty((m.shape[0],))
+
+        for i, simplex in enumerate(simplex_list):
+            vertex_es_count[simplex[-1]] += diffs[i]
+
+        return vertex_es_count
+
+    def get_vertex_bs_count(self, file: Path, dimension: int):
+        p1 = file / ("BS_D" + str(dimension) + ".npz")
+        ends = np.load(p1)['arr_0']
+
+        try:
+            matrix_path = file / (file.parts[-1] + ".pkl")
+            m = load_sparse_matrix_from_pkl(matrix_path)
+
+        except:
+            matrix_path = file / "graph.pkl"
+            m = load_sparse_matrix_from_pkl(matrix_path)
+
+        complex_file_path = matrix_path.with_name(matrix_path.stem + "-count.h5")
+        complex_file = h5py.File(complex_file_path)
+
+        simplex_list = np.array(complex_file['Cells_' + str(dimension)])
+
+        diffs = ends[1:] - ends[:-1]
+        vertex_bs_count = np.zeros((m.shape[0],))
+
+        for i, simplex in enumerate(simplex_list):
+            vertex_bs_count[simplex[-1]] += diffs[i]
+
+        return vertex_bs_count
