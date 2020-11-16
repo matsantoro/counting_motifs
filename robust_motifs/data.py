@@ -715,3 +715,15 @@ class ResultManager:
             vertex_bs_count[simplex[-1]] += diffs[i]
 
         return vertex_bs_count
+
+    def get_file_matrix(self, file: Path):
+
+        try:
+            matrix_path = file / (file.parts[-1] + ".pkl")
+            m = load_sparse_matrix_from_pkl(matrix_path)
+
+        except:
+            matrix_path = file / "graph.pkl"
+            m = load_sparse_matrix_from_pkl(matrix_path)
+
+        return m
