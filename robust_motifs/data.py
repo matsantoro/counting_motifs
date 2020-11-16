@@ -652,9 +652,9 @@ class ResultManager:
         return pd.DataFrame(a, columns=["count", "dim", "group", "motif", "filename"])
 
     def get_ES_count(self, file: Path, dimension: int):
-        p1 = file / "ES_D" + str(dimension) + ".npz"
-        return np.load(p1)['arr_0'], np.load(p1.with_name(p1.stem + "indptr.npz")['arr_0'])
+        p1 = file / ("ES_D" + str(dimension) + ".npz")
+        return np.load(p1)['arr_0'], np.load(p1.with_name(p1.stem + "indptr.npz"))['arr_0']
 
     def get_BS_count(self, file: Path, dimension: int):
-        p1 = file / "BS_D" + str(dimension) + ".npz"
-        return np.load(p1)['arr_0'], np.load(p1.with_name(p1.stem + "indptr.npz")['arr_0'])
+        p1 = file / ("BS_D" + str(dimension) + ".npz")
+        return np.load(p1)['arr_0'], np.load(p1.with_name(p1.stem + "indptr.npz"))['arr_0']
