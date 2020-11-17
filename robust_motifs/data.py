@@ -919,7 +919,7 @@ class ResultManager:
             es_morph_counts[morph_dict[get_morph(zones_array[simplex[-1]])]] += espointers[i + 1] - espointers[i]
         return es_morph_counts, bs_morph_counts, morph_list
 
-    def get_morph_counts(self, original_file_path, processed_h5_path, dimension):
+    def get_layer_counts(self, original_file_path, processed_h5_path, dimension):
         matrix = import_connectivity_matrix(original_file_path, dataframe=True)
         complex_file_path = processed_h5_path
         complex_file = h5py.File(complex_file_path)
