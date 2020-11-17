@@ -758,7 +758,7 @@ class ResultManager:
                 espairlist.append([
                     zones_array[simplex[-1]][3:].replace("_", ""), zones_array[element][3:].replace("_", "")
                 ])
-        bsdf = pd.DataFrame(bspairlist, columns = ['sink1', 'sink2', 'layer1', 'layer2', 'mtype1', 'mtype2'])
-        esdf = pd.DataFrame(espairlist, columns = ['sink', 'extra', 'layersink', 'layerextra', 'mtypesink', 'mtypeextra'])
+        bsdf = pd.DataFrame(bspairlist, columns = ['mtype1', 'mtype2'])
+        esdf = pd.DataFrame(espairlist, columns = ['mtypesink', 'mtypeextra'])
 
         return esdf, bsdf
