@@ -762,3 +762,104 @@ class ResultManager:
         esdf = pd.DataFrame(espairlist, columns = ['mtypesink', 'mtypeextra'])
 
         return esdf, bsdf
+
+    def get_motif_GID(self, original_file_path, processed_h5_path, dimension):
+        matrix = import_connectivity_matrix(original_file_path, dataframe=True)
+        complex_file_path = processed_h5_path
+        complex_file = h5py.File(complex_file_path)
+
+        zones_array = np.array([elem[0] for elem in matrix.index.values])
+
+        pbs = processed_h5_path.parent / ("BS_D" + str(dimension) + "indptr.npz")
+        pes = processed_h5_path.parent / ("ES_D" + str(dimension) + "indptr.npz")
+        bspointers = np.load(pbs)['arr_0']
+        espointers = np.load(pes)['arr_0']
+        pbs = processed_h5_path.parent / ("BS_D" + str(dimension) + ".npz")
+        pes = processed_h5_path.parent / ("ES_D" + str(dimension) + ".npz")
+        bsends = np.load(pbs)['arr_0']
+        esends = np.load(pes)['arr_0']
+
+        bslist = []
+        eslist = []
+        simplex_list = np.array(complex_file['Cells_' + str(dimension)])
+        for i, simplex in tqdm(enumerate(simplex_list)):
+            for element in bsends[bspointers[i]:bspointers[i+1]]:
+                bslist.append(
+                    simplex[-1]
+                )
+            for element in esends[espointers[i]:espointers[i + 1]]:
+                eslist.append(
+                    simplex[-1]
+                )
+        bsdf = pd.DataFrame(bslist, columns = ['GID'])
+        esdf = pd.DataFrame(eslist, columns = ['GIDsink'])
+
+        return esdf, bsdf
+
+    def get_motif_mtype(self, original_file_path, processed_h5_path, dimension):
+        matrix = import_connectivity_matrix(original_file_path, dataframe=True)
+        complex_file_path = processed_h5_path
+        complex_file = h5py.File(complex_file_path)
+
+        zones_array = np.array([elem[0] for elem in matrix.index.values])
+
+        pbs = processed_h5_path.parent / ("BS_D" + str(dimension) + "indptr.npz")
+        pes = processed_h5_path.parent / ("ES_D" + str(dimension) + "indptr.npz")
+        bspointers = np.load(pbs)['arr_0']
+        espointers = np.load(pes)['arr_0']
+        pbs = processed_h5_path.parent / ("BS_D" + str(dimension) + ".npz")
+        pes = processed_h5_path.parent / ("ES_D" + str(dimension) + ".npz")
+        bsends = np.load(pbs)['arr_0']
+        esends = np.load(pes)['arr_0']
+
+        bslist = []
+        eslist = []
+        simplex_list = np.array(complex_file['Cells_' + str(dimension)])
+        for i, simplex in tqdm(enumerate(simplex_list)):
+            zone = zones_array[simplex[-1]][3:].replace("_", "")
+            for element in bsends[bspointers[i]:bspointers[i+1]]:
+                bslist.append(
+                    zone
+                )
+            for element in esends[espointers[i]:espointers[i + 1]]:
+                eslist.append(
+                    zone
+                )
+        bsdf = pd.DataFrame(bslist, columns = ['mtype'])
+        esdf = pd.DataFrame(eslist, columns = ['mtypesink'])
+
+        return esdf, bsdf
+
+    def get_motif_mtype(self, original_file_path, processed_h5_path, dimension):
+        matrix = import_connectivity_matrix(original_file_path, dataframe=True)
+        complex_file_path = processed_h5_path
+        complex_file = h5py.File(complex_file_path)
+
+        zones_array = np.array([elem[0] for elem in matrix.index.values])
+
+        pbs = processed_h5_path.parent / ("BS_D" + str(dimension) + "indptr.npz")
+        pes = processed_h5_path.parent / ("ES_D" + str(dimension) + "indptr.npz")
+        bspointers = np.load(pbs)['arr_0']
+        espointers = np.load(pes)['arr_0']
+        pbs = processed_h5_path.parent / ("BS_D" + str(dimension) + ".npz")
+        pes = processed_h5_path.parent / ("ES_D" + str(dimension) + ".npz")
+        bsends = np.load(pbs)['arr_0']
+        esends = np.load(pes)['arr_0']
+
+        bslist = []
+        eslist = []
+        simplex_list = np.array(complex_file['Cells_' + str(dimension)])
+        for i, simplex in tqdm(enumerate(simplex_list)):
+            zone = zones_array[simplex[-1]][:2]
+            for element in bsends[bspointers[i]:bspointers[i+1]]:
+                bslist.append(
+                    zone
+                )
+            for element in esends[espointers[i]:espointers[i + 1]]:
+                eslist.append(
+                    zone
+                )
+        bsdf = pd.DataFrame(bslist, columns = ['layer'])
+        esdf = pd.DataFrame(eslist, columns = ['layersink'])
+
+        return esdf, bsdf
