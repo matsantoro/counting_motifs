@@ -752,14 +752,10 @@ class ResultManager:
         for i, simplex in tqdm(enumerate(simplex_list)):
             for element in bsends[bspointers[i]:bspointers[i+1]]:
                 bspairlist.append([
-                    zones_array[simplex[-1]], zones_array[element],
-                    zones_array[simplex[-1]][:2], zones_array[element][2:],
                     zones_array[simplex[-1]][3:].replace("_", ""), zones_array[element][3:].replace("_", "")
                 ])
             for element in esends[espointers[i]:espointers[i + 1]]:
                 espairlist.append([
-                    zones_array[simplex[-1]], zones_array[element],
-                    zones_array[simplex[-1]][:2], zones_array[element][2:],
                     zones_array[simplex[-1]][3:].replace("_", ""), zones_array[element][3:].replace("_", "")
                 ])
         bsdf = pd.DataFrame(bspairlist, columns = ['sink1', 'sink2', 'layer1', 'layer2', 'mtype1', 'mtype2'])
