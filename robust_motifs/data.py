@@ -896,7 +896,7 @@ class ResultManager:
             return denom[3:].replace("_", "")
 
         zones_array = np.array([elem[0] for elem in matrix.index.values])
-        morph_list = list(set([get_morph(elem) for elem in matrix.index.unique().values]))
+        morph_list = list(set([get_morph(elem[0]) for elem in matrix.index.unique().values]))
         morph_dict = {}
         for i, element in enumerate(morph_list):
             morph_dict.update({element: i})
@@ -928,7 +928,7 @@ class ResultManager:
             return denom[:2]
 
         zones_array = np.array([elem[0] for elem in matrix.index.values])
-        morph_list = list(set([get_morph(elem) for elem in matrix.index.unique().values]))
+        morph_list = list(set([get_morph(elem[0]) for elem in matrix.index.unique().values]))
         morph_dict = {}
         for i, element in enumerate(morph_list):
             morph_dict.update({element: i})
