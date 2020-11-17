@@ -762,7 +762,7 @@ class ResultManager:
                     zones_array[simplex[-1]][:2], zones_array[element][2:],
                     zones_array[simplex[-1]][3:].replace("_", ""), zones_array[element][3:].replace("_", "")
                 ])
-        bsdf = pd.DataFrame(bspairlist, columns = ['sink1', 'sink2'])
-        esdf = pd.DataFrame(espairlist, columns = ['sink', 'extra'])
+        bsdf = pd.DataFrame(bspairlist, columns = ['sink1', 'sink2', 'layer1', 'layer2', 'mtype1', 'mtype2'])
+        esdf = pd.DataFrame(espairlist, columns = ['sink', 'extra', 'layersink', 'layerextra', 'mtypesink', 'mtypeextra'])
 
         return esdf, bsdf
