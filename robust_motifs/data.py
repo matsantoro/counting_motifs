@@ -727,3 +727,42 @@ class ResultManager:
             m = load_sparse_matrix_from_pkl(matrix_path)
 
         return m
+
+    def get_matrix_properties(self, original_file_path, processed_h5_path, dimension):
+        matrix = import_connectivity_matrix(original_file_path, dataframe=True)
+        m = import_connectivity_matrix(original_file_path, dataframe = False, type = 'csr')
+        complex_file_path = processed_h5_path
+        complex_file = h5py.File(complex_file_path)
+
+
+        zones_array = np.array([elem[0] for elem in matrix.index.values])
+
+        pbs = processed_h5_path.parent / ("BS_D" + str(dimension) + "indptr.npz")
+        pes = processed_h5_path.parent / ("ES_D" + str(dimension) + "indptr.npz")
+        bspointers = np.load(pbs)['arr_0']
+        espointers = np.load(pes)['arr_0']
+        pbs = processed_h5_path.parent / ("BS_D" + str(dimension) + ".npz")
+        pes = processed_h5_path.parent / ("ES_D" + str(dimension) + ".npz")
+        bsends = np.load(pbs)['arr_0']
+        esends = np.load(pes)['arr_0']
+
+        bspairlist = []
+        espairlist = []
+        simplex_list = np.array(complex_file['Cells_' + str(dimension)])
+        for i, simplex in tqdm(enumerate(simplex_list)):
+            for element in bsends[bspointers[i]:bspointers[i+1]]:
+                bspairlist.append([
+                    zones_array[simplex[-1]], zones_array[element],
+                    zones_array[simplex[-1]][:2], zones_array[element][2:],
+                    zones_array[simplex[-1]][3:].replace("_", ""), zones_array[element][3:].replace("_", "")
+                ])
+            for element in esends[espointers[i]:espointers[i + 1]]:
+                espairlist.append([
+                    zones_array[simplex[-1]], zones_array[element],
+                    zones_array[simplex[-1]][:2], zones_array[element][2:],
+                    zones_array[simplex[-1]][3:].replace("_", ""), zones_array[element][3:].replace("_", "")
+                ])
+        bsdf = pd.DataFrame(bspairlist, columns = ['sink1', 'sink2'])
+        esdf = pd.DataFrame(espairlist, columns = ['sink', 'extra'])
+
+        return esdf, bsdf
