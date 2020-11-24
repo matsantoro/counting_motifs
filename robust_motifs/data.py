@@ -11,7 +11,7 @@ from typing import List, Optional, Union
 import scipy.sparse as sp
 
 from .custom_mp import prepare_shared_memory, share_dense_matrix
-
+from .utilities import build_triu_matrix
 
 def import_connectivity_matrix(path: Path = Path('data/test/cons_locs_pathways_mc0_Column.h5'),
                         zones: Optional[List[str]] = None,
@@ -987,3 +987,24 @@ class ResultManager:
             for element in esends[espointers[i]:espointers[i+1]]:
                 es_morph_matrix[sink_morph, morph_dict[get_morph(zones_array[element])]] += 1
         return es_morph_matrix, bs_morph_matrix, morph_list
+
+
+def create_simplices(dimension: int, instances: int, extra_edges: int, path: Path = None):
+    """Function that creates simplices instances with some extra edges at a given path.
+
+    :argument dimension: (int) dimension of the simplex to create.
+    :argument instances: (int) number of intances to create.
+    :argument extra_edges: (int) number of extra edges to add to the simplex.
+    :argument path: (pathlib.Path) path to create instances at."""
+    for i in range(instances):
+        matrix = np.triu(np.ones((dimension+1, dimension+1), dtype=bool), 1)
+        n = matrix.shape[0]
+        v = np.concatenate([np.ones((extra_edges,), dtype = bool),np.zeros((int(n*(n-1)/2-extra_edges),), dtype = bool)])
+        np.random.shuffle(v)
+        extra = build_triu_matrix(v).T.astype(bool)
+        matrix += extra
+        matrix = sp.csr_matrix(matrix)
+        if path is None:
+            path = Path("data/bcounts/dim" + str(dimension) + "/instance" + str(i) + ".pkl")
+        save_count_graph_from_matrix(path, matrix)
+
