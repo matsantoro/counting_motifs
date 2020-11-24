@@ -1009,15 +1009,27 @@ def create_simplices(dimension: int, instances: int, extra_edges: int, path: Pat
         iterator = tqdm(range(instances))
     else:
         iterator = range(instances)
+
+    counts_per_dimension = {}
+    for i in range(1, dimension):
+        counts_per_dimension.update({i:np.zeros(i+1, i+1)})
+
     for i in iterator:
         matrix = np.triu(np.ones((dimension+1, dimension+1), dtype=bool), 1)
         n = matrix.shape[0]
-        v = np.concatenate([np.ones((extra_edges,), dtype = bool),np.zeros((int(n*(n-1)/2-extra_edges),), dtype = bool)])
+        v = np.concatenate([np.ones((extra_edges,), dtype=bool), np.zeros((int(n*(n-1)/2-extra_edges),), dtype=bool)])
         np.random.shuffle(v)
         extra = build_triu_matrix(v).T.astype(bool)
         matrix += extra
         matrix = sp.csr_matrix(matrix)
         if path is None:
             path = Path("data/bcounts/dim" + str(dimension) + "/instance" + str(i) + "/graph.flag")
-        save_count_graph_from_matrix(path / ("seed" + str(i) + "/graph.flag"), matrix, verbose=False)
+        f, p, c = save_count_graph_from_matrix(path / ("seed" + str(i) + "/graph.flag"), matrix, verbose=False)
+        count_file = h5py.File(c)
+        for i in range(1, dimension):
+            simplices = count_file['Cells_'+str(i)]
+            for simplex in simplices:
+                counts_per_dimension[i] += extra[simplex].T[simplex].T
+
+    pickle.dump(counts_per_dimension, path / "bcount.pkl")
 
