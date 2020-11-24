@@ -1021,15 +1021,15 @@ def create_simplices(dimension: int, instances: int, extra_edges: int, path: Pat
         np.random.shuffle(v)
         extra = build_triu_matrix(v).T.astype(bool)
         matrix += extra
-        matrix = sp.csr_matrix(matrix)
+        matrix1 = sp.csr_matrix(matrix)
         if path is None:
             path = Path("data/bcounts/dim" + str(dimension) + "/instance" + str(i) + "/graph.flag")
-        f, p, c = save_count_graph_from_matrix(path / ("seed" + str(i) + "/graph.flag"), matrix, verbose=False)
+        f, p, c = save_count_graph_from_matrix(path / ("seed" + str(i) + "/graph.flag"), matrix1, verbose=False)
         count_file = h5py.File(c)
         for i in range(1, dimension):
             simplices = count_file['Cells_'+str(i)]
             for simplex in simplices:
-                counts_per_dimension[i] += extra[simplex].T[simplex].T
+                counts_per_dimension[i] += matrix[simplex].T[simplex].T
 
     pickle.dump(counts_per_dimension, path / "bcount.pkl")
 
