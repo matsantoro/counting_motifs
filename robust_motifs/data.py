@@ -1012,7 +1012,7 @@ def create_simplices(dimension: int, instances: int, extra_edges: int, path: Pat
 
     counts_per_dimension = {}
     for i in range(1, dimension):
-        counts_per_dimension.update({i:np.zeros(i+1, i+1)})
+        counts_per_dimension.update({i:np.zeros((i+1, i+1))})
 
     for i in iterator:
         matrix = np.triu(np.ones((dimension+1, dimension+1), dtype=bool), 1)
@@ -1030,6 +1030,6 @@ def create_simplices(dimension: int, instances: int, extra_edges: int, path: Pat
             simplices = count_file['Cells_'+str(i)]
             for simplex in simplices:
                 counts_per_dimension[i] += extra[simplex].T[simplex].T
-
-    pickle.dump(counts_per_dimension, path / "bcount.pkl")
+    with open(path / "bcount.pkl", 'wb') as f:
+        pickle.dump(counts_per_dimension, f)
 
