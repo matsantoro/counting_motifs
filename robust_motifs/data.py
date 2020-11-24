@@ -132,19 +132,28 @@ def matrix_shuffle(matrix: Union[sp.csr_matrix, np.ndarray], exclude_diagonal: b
         return _matrix
 
 
-def write_flagser_file(path: Path, matrix: sp.csr_matrix):
+def write_flagser_file(path: Path, matrix: sp.csr_matrix, verbose = True):
     """Writes a matrix as a flagser file.
         :argument path: flagser file path.
         :argument matrix: sparse matrix.
+        :argument verbose: whether to see tqdm pbar.
     """
     n_nodes = matrix.shape[0]
     with open(path, "w") as f:
         f.write("dim 0\n")
-        for _ in tqdm(range(n_nodes)):
+        if verbose:
+            iterator = tqdm(range(n_nodes))
+        else:
+            iterator = range(n_nodes)
+        for _ in iterator:
             f.write("0 ")
         f.write("\n")
         f.write("dim 1\n")
-        for row, col in tqdm(zip(*matrix.nonzero())):
+        if verbose:
+            iterator = tqdm(zip(*matrix.nonzero()))
+        else:
+            iterator = zip(*matrix.nonzero())
+        for row, col in iterator:
             f.write(str(row) + " " + str(col) + "\n")
 
 
@@ -188,7 +197,7 @@ def save_count_er_graph(path: Path, n_nodes: int, density: float):
     return path, pickle_path, count_path
 
 
-def save_count_graph_from_matrix(path: Path, matrix: sp.csr_matrix):
+def save_count_graph_from_matrix(path: Path, matrix: sp.csr_matrix, verbose: bool = True):
     """Saves the graph from the adjacency matrix as a flagser-readable file.
     Pickle-dumps the adjacency matrix. Creates the h5 count file with flagser.
 
@@ -202,7 +211,7 @@ def save_count_graph_from_matrix(path: Path, matrix: sp.csr_matrix):
     path.parent.mkdir(exist_ok=True, parents=True)
     pickle_path = path.with_suffix(".pkl")
     count_path = path.parent / Path(path.stem + "-count.h5")
-    write_flagser_file(path, matrix)
+    write_flagser_file(path, matrix, verbose)
     save_sparse_matrix_to_pkl(pickle_path, matrix)
     flagser_count(path, count_path)
     return path, pickle_path, count_path
@@ -996,7 +1005,7 @@ def create_simplices(dimension: int, instances: int, extra_edges: int, path: Pat
     :argument instances: (int) number of intances to create.
     :argument extra_edges: (int) number of extra edges to add to the simplex.
     :argument path: (pathlib.Path) path to create instances at."""
-    for i in range(instances):
+    for i in tqdm(range(instances)):
         matrix = np.triu(np.ones((dimension+1, dimension+1), dtype=bool), 1)
         n = matrix.shape[0]
         v = np.concatenate([np.ones((extra_edges,), dtype = bool),np.zeros((int(n*(n-1)/2-extra_edges),), dtype = bool)])
@@ -1006,5 +1015,5 @@ def create_simplices(dimension: int, instances: int, extra_edges: int, path: Pat
         matrix = sp.csr_matrix(matrix)
         if path is None:
             path = Path("data/bcounts/dim" + str(dimension) + "/instance" + str(i) + "/graph.flag")
-        save_count_graph_from_matrix(path / ("seed" + str(i) + "/graph.flag"), matrix)
+        save_count_graph_from_matrix(path / ("seed" + str(i) + "/graph.flag"), matrix, verbose=False)
 
