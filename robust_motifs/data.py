@@ -998,14 +998,18 @@ class ResultManager:
         return es_morph_matrix, bs_morph_matrix, morph_list
 
 
-def create_simplices(dimension: int, instances: int, extra_edges: int, path: Path = None):
+def create_simplices(dimension: int, instances: int, extra_edges: int, path: Path = None, verbose = True):
     """Function that creates simplices instances with some extra edges at a given path.
 
     :argument dimension: (int) dimension of the simplex to create.
     :argument instances: (int) number of intances to create.
     :argument extra_edges: (int) number of extra edges to add to the simplex.
     :argument path: (pathlib.Path) path to create instances at."""
-    for i in tqdm(range(instances)):
+    if verbose:
+        iterator = tqdm(range(instances))
+    else:
+        iterator = range(instances)
+    for i in iterator:
         matrix = np.triu(np.ones((dimension+1, dimension+1), dtype=bool), 1)
         n = matrix.shape[0]
         v = np.concatenate([np.ones((extra_edges,), dtype = bool),np.zeros((int(n*(n-1)/2-extra_edges),), dtype = bool)])
