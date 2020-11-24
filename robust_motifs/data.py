@@ -1006,5 +1006,5 @@ def create_simplices(dimension: int, instances: int, extra_edges: int, path: Pat
         matrix = sp.csr_matrix(matrix)
         if path is None:
             path = Path("data/bcounts/dim" + str(dimension) + "/instance" + str(i) + "/graph.pkl")
-        save_count_graph_from_matrix(path / "seed" + str(i) + "/graph.pkl", matrix)
+        save_count_graph_from_matrix(path / ("seed" + str(i) + "/graph.pkl"), matrix)
 
