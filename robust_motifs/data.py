@@ -998,13 +998,15 @@ class ResultManager:
         return es_morph_matrix, bs_morph_matrix, morph_list
 
 
-def create_simplices(dimension: int, instances: int, extra_edges: int, path: Path = None, verbose = True):
+def create_simplices(dimension: int, instances: int, extra_edges: int, path: Path = None,
+                     verbose = True, seed: int = 0, in_place = True):
     """Function that creates simplices instances with some extra edges at a given path.
 
     :argument dimension: (int) dimension of the simplex to create.
     :argument instances: (int) number of intances to create.
     :argument extra_edges: (int) number of extra edges to add to the simplex.
     :argument path: (pathlib.Path) path to create instances at."""
+    np.random.seed(seed)
     if verbose:
         iterator = tqdm(range(instances))
     else:
@@ -1023,8 +1025,14 @@ def create_simplices(dimension: int, instances: int, extra_edges: int, path: Pat
         matrix += extra
         matrix1 = sp.csr_matrix(matrix)
         if path is None:
-            path = Path("data/bcounts/dim" + str(dimension) + "/instance" + str(i) + "/graph.flag")
-        f, p, c = save_count_graph_from_matrix(path / ("seed" + str(i) + "/graph.flag"), matrix1, verbose=False)
+            if in_place:
+                path = Path("data/bcounts/dim" + str(dimension) + "/instance" + str(0) + "/graph.flag")
+            else:
+                path = Path("data/bcounts/dim" + str(dimension) + "/instance" + str(i) + "/graph.flag")
+        if in_place:
+            f, p, c = save_count_graph_from_matrix(path / ("seed" + str(0) + "/graph.flag"), matrix1, verbose=False)
+        else:
+            f, p, c = save_count_graph_from_matrix(path / ("seed" + str(i) + "/graph.flag"), matrix1, verbose=False)
         count_file = h5py.File(c)
         for i in range(1, dimension):
             simplices = count_file['Cells_'+str(i)]
