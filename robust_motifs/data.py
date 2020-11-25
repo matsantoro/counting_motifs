@@ -1034,7 +1034,7 @@ def create_simplices(dimension: int, instances: int, extra_edges: int, path: Pat
         else:
             f, p, c = save_count_graph_from_matrix(path / ("seed" + str(i) + "/graph.flag"), matrix1, verbose=False)
         count_file = h5py.File(c)
-        for i in range(1, dimension):
+        for i in range(1, dimension+1):
             simplices = count_file['Cells_'+str(i)]
             for simplex in simplices:
                 counts_per_dimension[i] += matrix[simplex].T[simplex].T
