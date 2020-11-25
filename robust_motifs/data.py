@@ -1013,7 +1013,7 @@ def create_simplices(dimension: int, instances: int, extra_edges: int, path: Pat
         iterator = range(instances)
 
     counts_per_dimension = {}
-    for i in range(1, dimension):
+    for i in range(1, dimension+1):
         counts_per_dimension.update({i:np.zeros((i+1, i+1))})
 
     for i in iterator:
