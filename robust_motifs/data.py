@@ -1056,7 +1056,7 @@ def create_dags(dimension: int, n_edges: int, instances: int, extra_edges: int, 
         iterator = range(instances)
 
     counts_per_dimension = {}
-    for i in range(1, dimension+1):
+    for i in range(1, 15):
         counts_per_dimension.update({i:np.zeros((i+1, i+1))})
 
     for i in iterator:
@@ -1069,7 +1069,7 @@ def create_dags(dimension: int, n_edges: int, instances: int, extra_edges: int, 
                 np.zeros((total_possible_edges - n_edges,), dtype=int)
         ])
         np.random.shuffle(v)
-        extra = np.clip(0, 1, (build_triu_matrix(v) - np.ones((dimension+1, dimension+1)))).T.astype(bool)
+        extra = np.clip((build_triu_matrix(v) - np.ones((dimension+1, dimension+1))),0,1).T.astype(bool)
         matrix = build_triu_matrix(v).astype(bool)
         matrix += extra
         matrix1 = sp.csr_matrix(matrix)
@@ -1083,7 +1083,7 @@ def create_dags(dimension: int, n_edges: int, instances: int, extra_edges: int, 
         else:
             f, p, c = save_count_graph_from_matrix(path / ("seed" + str(i) + "/graph.flag"), matrix1, verbose=False)
         count_file = h5py.File(c)
-        for i in range(1, dimension+1):
+        for i in range(1, len(count_file.keys())+1):
             simplices = count_file['Cells_'+str(i)]
             for simplex in simplices:
                 counts_per_dimension[i] += matrix[simplex].T[simplex].T
@@ -1106,7 +1106,7 @@ def create_digraphs(dimension: int, n_edges: int, instances: int, extra_edges: i
         iterator = range(instances)
 
     counts_per_dimension = {}
-    for i in range(1, dimension+1):
+    for i in range(1, 15):
         counts_per_dimension.update({i:np.zeros((i+1, i+1))})
 
     for i in iterator:
@@ -1119,7 +1119,7 @@ def create_digraphs(dimension: int, n_edges: int, instances: int, extra_edges: i
                 np.zeros((total_possible_edges - n_edges,), dtype=int)
         ])
         np.random.shuffle(v)
-        extra = np.clip(0, 1, (build_triu_matrix(v) - np.ones((dimension+1, dimension+1)))).T.astype(bool)
+        extra = np.clip((build_triu_matrix(v) - np.ones((dimension+1, dimension+1))), 0, 1).T.astype(bool)
         matrix = build_triu_matrix(v).astype(bool)
         matrix += extra
         for i in range(dimension+1):
@@ -1138,7 +1138,7 @@ def create_digraphs(dimension: int, n_edges: int, instances: int, extra_edges: i
         else:
             f, p, c = save_count_graph_from_matrix(path / ("seed" + str(i) + "/graph.flag"), matrix1, verbose=False)
         count_file = h5py.File(c)
-        for i in range(1, dimension+1):
+        for i in range(1, len(count_file.keys())+1):
             simplices = count_file['Cells_'+str(i)]
             for simplex in simplices:
                 counts_per_dimension[i] += matrix[simplex].T[simplex].T
