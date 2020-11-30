@@ -1060,7 +1060,7 @@ def create_dags(dimension: int, n_edges: int, instances: int, extra_edges: int, 
         counts_per_dimension.update({i:np.zeros((i+1, i+1))})
 
     for i in iterator:
-        n = matrix.shape[0]
+        n = dimension + 1
         total_possible_edges = int(n * (n - 1) / 2)
         n_unidirectional_edges = (n_edges - extra_edges)
         v = np.concatenate([
@@ -1110,7 +1110,7 @@ def create_digraphs(dimension: int, n_edges: int, instances: int, extra_edges: i
         counts_per_dimension.update({i:np.zeros((i+1, i+1))})
 
     for i in iterator:
-        n = matrix.shape[0]
+        n = dimension + 1
         total_possible_edges = int(n * (n - 1) / 2)
         n_unidirectional_edges = (n_edges - extra_edges)
         v = np.concatenate([
