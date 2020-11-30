@@ -1041,3 +1041,106 @@ def create_simplices(dimension: int, instances: int, extra_edges: int, path: Pat
     with open(path / "bcount.pkl", 'wb') as f:
         pickle.dump(counts_per_dimension, f)
 
+def create_dags(dimension: int, n_edges: int, instances: int, extra_edges: int, path: Path = None,
+                     verbose = True, seed: int = 0, in_place = True):
+    """Function that creates DAG instances with some extra edges at a given path.
+
+    :argument dimension: (int) dimension of the simplex to create.
+    :argument instances: (int) number of intances to create.
+    :argument extra_edges: (int) number of extra edges to add to the simplex.
+    :argument path: (pathlib.Path) path to create instances at."""
+    np.random.seed(seed)
+    if verbose:
+        iterator = tqdm(range(instances))
+    else:
+        iterator = range(instances)
+
+    counts_per_dimension = {}
+    for i in range(1, dimension+1):
+        counts_per_dimension.update({i:np.zeros((i+1, i+1))})
+
+    for i in iterator:
+        total_possible_edges = int(n * (n - 1) / 2)
+        n_unidirectional_edges = (n_edges - extra_edges)
+        v = np.concatenate([
+                np.ones((n_unidirectional_edges,), dtype=int),
+                2*np.ones((extra_edges,), dtype=int),
+                np.zeros((total_possible_edges - n_edges,), dtype=int)
+        ])
+        np.random.shuffle(v)
+        extra = np.clip(0, 1, (build_triu_matrix(v) - np.ones((dimension+1, dimension+1)))).T
+        matrix = build_triu_matrix(v).astype(bool)
+        n = matrix.shape[0]
+        matrix += extra
+        matrix1 = sp.csr_matrix(matrix)
+        if path is None:
+            if in_place:
+                path = Path("data/bcounts/dim" + str(dimension) + "/instance" + str(0) + "/graph.flag")
+            else:
+                path = Path("data/bcounts/dim" + str(dimension) + "/instance" + str(i) + "/graph.flag")
+        if in_place:
+            f, p, c = save_count_graph_from_matrix(path / ("seed" + str(0) + "/graph.flag"), matrix1, verbose=False)
+        else:
+            f, p, c = save_count_graph_from_matrix(path / ("seed" + str(i) + "/graph.flag"), matrix1, verbose=False)
+        count_file = h5py.File(c)
+        for i in range(1, dimension+1):
+            simplices = count_file['Cells_'+str(i)]
+            for simplex in simplices:
+                counts_per_dimension[i] += matrix[simplex].T[simplex].T
+    with open(path / "bcount.pkl", 'wb') as f:
+        pickle.dump(counts_per_dimension, f)
+
+
+def create_digraphs(dimension: int, n_edges: int, instances: int, extra_edges: int, path: Path = None,
+                     verbose = True, seed: int = 0, in_place = True):
+    """Function that creates digraph instances with some extra edges at a given path.
+
+    :argument dimension: (int) dimension of the simplex to create.
+    :argument instances: (int) number of intances to create.
+    :argument extra_edges: (int) number of extra edges to add to the simplex.
+    :argument path: (pathlib.Path) path to create instances at."""
+    np.random.seed(seed)
+    if verbose:
+        iterator = tqdm(range(instances))
+    else:
+        iterator = range(instances)
+
+    counts_per_dimension = {}
+    for i in range(1, dimension+1):
+        counts_per_dimension.update({i:np.zeros((i+1, i+1))})
+
+    for i in iterator:
+        total_possible_edges = int(n * (n - 1) / 2)
+        n_unidirectional_edges = (n_edges - extra_edges)
+        v = np.concatenate([
+                np.ones((n_unidirectional_edges,), dtype=int),
+                2*np.ones((extra_edges,), dtype=int),
+                np.zeros((total_possible_edges - n_edges,), dtype=int)
+        ])
+        np.random.shuffle(v)
+        extra = np.clip(0, 1, (build_triu_matrix(v) - np.ones((dimension+1, dimension+1)))).T
+        matrix = build_triu_matrix(v).astype(bool)
+        n = matrix.shape[0]
+        matrix += extra
+        for i in range(dimension+1):
+            for j in range(i, dimension+1):
+                if matrix[i,j]:
+                    matrix[i,j] = matrix[j,i]
+                    matrix[j,i] = True
+        matrix1 = sp.csr_matrix(matrix)
+        if path is None:
+            if in_place:
+                path = Path("data/bcounts/dim" + str(dimension) + "/instance" + str(0) + "/graph.flag")
+            else:
+                path = Path("data/bcounts/dim" + str(dimension) + "/instance" + str(i) + "/graph.flag")
+        if in_place:
+            f, p, c = save_count_graph_from_matrix(path / ("seed" + str(0) + "/graph.flag"), matrix1, verbose=False)
+        else:
+            f, p, c = save_count_graph_from_matrix(path / ("seed" + str(i) + "/graph.flag"), matrix1, verbose=False)
+        count_file = h5py.File(c)
+        for i in range(1, dimension+1):
+            simplices = count_file['Cells_'+str(i)]
+            for simplex in simplices:
+                counts_per_dimension[i] += matrix[simplex].T[simplex].T
+    with open(path / "bcount.pkl", 'wb') as f:
+        pickle.dump(counts_per_dimension, f)
