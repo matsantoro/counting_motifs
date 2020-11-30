@@ -1069,7 +1069,7 @@ def create_dags(dimension: int, n_edges: int, instances: int, extra_edges: int, 
                 np.zeros((total_possible_edges - n_edges,), dtype=int)
         ])
         np.random.shuffle(v)
-        extra = np.clip(0, 1, (build_triu_matrix(v) - np.ones((dimension+1, dimension+1)))).T
+        extra = np.clip(0, 1, (build_triu_matrix(v) - np.ones((dimension+1, dimension+1)))).T.astype(bool)
         matrix = build_triu_matrix(v).astype(bool)
         matrix += extra
         matrix1 = sp.csr_matrix(matrix)
@@ -1119,7 +1119,7 @@ def create_digraphs(dimension: int, n_edges: int, instances: int, extra_edges: i
                 np.zeros((total_possible_edges - n_edges,), dtype=int)
         ])
         np.random.shuffle(v)
-        extra = np.clip(0, 1, (build_triu_matrix(v) - np.ones((dimension+1, dimension+1)))).T
+        extra = np.clip(0, 1, (build_triu_matrix(v) - np.ones((dimension+1, dimension+1)))).T.astype(bool)
         matrix = build_triu_matrix(v).astype(bool)
         matrix += extra
         for i in range(dimension+1):
