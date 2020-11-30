@@ -1060,6 +1060,7 @@ def create_dags(dimension: int, n_edges: int, instances: int, extra_edges: int, 
         counts_per_dimension.update({i:np.zeros((i+1, i+1))})
 
     for i in iterator:
+        n = matrix.shape[0]
         total_possible_edges = int(n * (n - 1) / 2)
         n_unidirectional_edges = (n_edges - extra_edges)
         v = np.concatenate([
@@ -1070,7 +1071,6 @@ def create_dags(dimension: int, n_edges: int, instances: int, extra_edges: int, 
         np.random.shuffle(v)
         extra = np.clip(0, 1, (build_triu_matrix(v) - np.ones((dimension+1, dimension+1)))).T
         matrix = build_triu_matrix(v).astype(bool)
-        n = matrix.shape[0]
         matrix += extra
         matrix1 = sp.csr_matrix(matrix)
         if path is None:
@@ -1110,6 +1110,7 @@ def create_digraphs(dimension: int, n_edges: int, instances: int, extra_edges: i
         counts_per_dimension.update({i:np.zeros((i+1, i+1))})
 
     for i in iterator:
+        n = matrix.shape[0]
         total_possible_edges = int(n * (n - 1) / 2)
         n_unidirectional_edges = (n_edges - extra_edges)
         v = np.concatenate([
@@ -1120,7 +1121,6 @@ def create_digraphs(dimension: int, n_edges: int, instances: int, extra_edges: i
         np.random.shuffle(v)
         extra = np.clip(0, 1, (build_triu_matrix(v) - np.ones((dimension+1, dimension+1)))).T
         matrix = build_triu_matrix(v).astype(bool)
-        n = matrix.shape[0]
         matrix += extra
         for i in range(dimension+1):
             for j in range(i, dimension+1):
