@@ -1,9 +1,11 @@
 import datetime
+import h5py
 import multiprocessing as mp
 from multiprocessing.shared_memory import SharedMemory
 import numpy as np
 import os
 from pathlib import Path
+import pickle
 import psutil
 import scipy.sparse as sp
 from tqdm import tqdm
@@ -600,3 +602,23 @@ class Processor:
                 else:
                     log.write(str(datetime.datetime.now()) + " Found existing BS count. Skipping...\n")
                     pass
+
+
+def count_bidirectional_edges(matrix: np.ndarray, count_file: h5py.File, dimension: int):
+    counts_per_dimension = {}
+    for i in range(1, dimension + 1):
+        counts_per_dimension.update({i: np.zeros((i + 1, i + 1))})
+    for i in range(1, dimension + 1):
+        simplices = count_file['Cells_' + str(i)]
+        for simplex in simplices:
+            counts_per_dimension[i] += matrix[simplex].T[simplex].T
+    return counts_per_dimension
+
+
+def bcount_from_file(path: Path, dimension: int):
+    matrix = load_sparse_matrix_from_pkl(path)
+    matrix = np.ndarray(matrix.todense())
+    count_file = h5py.File(path.with_name(path.stem + "-count.h5"))
+    counts_per_dimension = count_bidirectional_edges(matrix, count_file, dimension)
+    with open(path.with_name("bcounts.pkl"), 'wb') as file:
+        pickle.dump(counts_per_dimension, file)
