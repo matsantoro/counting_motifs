@@ -609,9 +609,12 @@ def count_bidirectional_edges(matrix: np.ndarray, count_file: h5py.File, dimensi
     for i in range(1, dimension + 1):
         counts_per_dimension.update({i: np.zeros((i + 1, i + 1))})
     for i in range(1, dimension + 1):
-        simplices = count_file['Cells_' + str(i)]
-        for simplex in tqdm(simplices):
-            counts_per_dimension[i] += matrix[simplex].T[simplex].T
+        try:
+            simplices = count_file['Cells_' + str(i)]
+            for simplex in tqdm(simplices):
+                counts_per_dimension[i] += matrix[simplex].T[simplex].T
+        except KeyError:
+            pass
     return counts_per_dimension
 
 
