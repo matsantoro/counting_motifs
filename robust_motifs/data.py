@@ -621,14 +621,14 @@ def create_control_graphs_from_matrix(n_instances: int, matrix_path: Path, path:
             bm = bm.tocoo()
             for row, col in zip(bm.row, bm.col):
                 if np.random.binomial(1,0.5,1):
-                    m[row][col] = False
+                    m[row, col] = False
                 else:
-                    m[col][row] = False
+                    m[col, row] = False
             m.eliminate_zeros()
             n_edges = m.count_nonzero()
             for row, col in zip(m1.row, m1.col):
                 if np.random.binomial(1,n_bidirectional_edges/n_edges,1):
-                    m[col][row] = True
+                    m[col, row] = True
             save_path = path / ("seed_"+str(n)) / "graph.flag"
             m = m.tocsr()
             save_count_graph_from_matrix(save_path, m)
