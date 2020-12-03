@@ -611,6 +611,27 @@ def create_control_graphs_from_matrix(n_instances: int, matrix_path: Path, path:
             m = adjust_bidirectional_edges(m, int(bm.count_nonzero()/2))
             save_path = path / ("seed_"+str(n)) / "graph.flag"
             save_count_graph_from_matrix(save_path, m)
+    if type == 'shuffled_biedges':
+        for n in tqdm(range(n_instances)):
+            m = import_connectivity_matrix(matrix_path, dataframe=False, type='csr')
+            m1 = m.tocoo()
+            m = m.tolil()
+            bm = sp.triu(m.multiply(m.T))
+            n_bidirectional_edges = bm.count_nonzero()
+            bm = bm.tocoo()
+            for row, col in zip(bm.row, bm.col):
+                if np.random.binomial(1,0.5,1):
+                    m[row][col] = False
+                else:
+                    m[col][row] = False
+            m.eliminate_zeros()
+            n_edges = m.count_nonzero()
+            for row, col in zip(m1.row, m1.col):
+                if np.random.binomial(1,n_bidirectional_edges/n_edges,1):
+                    m[col][row] = True
+            save_path = path / ("seed_"+str(n)) / "graph.flag"
+            m = m.tocsr()
+            save_count_graph_from_matrix(save_path, m)
 
 
 class ResultManager:
