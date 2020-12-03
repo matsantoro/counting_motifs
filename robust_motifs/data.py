@@ -624,7 +624,6 @@ def create_control_graphs_from_matrix(n_instances: int, matrix_path: Path, path:
                     m[row, col] = False
                 else:
                     m[col, row] = False
-            m.eliminate_zeros()
             n_edges = m.count_nonzero()
             for row, col in zip(m1.row, m1.col):
                 if np.random.binomial(1,n_bidirectional_edges/n_edges,1):
