@@ -1124,7 +1124,7 @@ def create_digraphs(dimension: int, n_edges: int, instances: int, extra_edges: i
         matrix += extra
         for i in range(dimension+1):
             for j in range(i, dimension+1):
-                if matrix[i,j]:
+                if matrix[i,j] and np.random.binomial(1,0.5,1):
                     matrix[i,j] = matrix[j,i]
                     matrix[j,i] = True
         matrix1 = sp.csr_matrix(matrix)
