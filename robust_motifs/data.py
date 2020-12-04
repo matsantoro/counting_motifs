@@ -273,7 +273,7 @@ def flagser_count(in_path: Path, out_path: Path, overwrite: bool = True, maximal
         if overwrite:
             maximal_path.unlink(missing_ok=True)
         maximal_cfile = h5py.File(maximal_path, 'w')
-        for i in range(len(cfile.keys())-1):
+        for i in tqdm(range(len(cfile.keys())-1)):
             simplices1 = np.array(cfile['Cells_'+(str(i+1))])
             simplices2 = np.array(cfile['Cells_'+(str(i+2))])
             new_simplices = find_maximal_simplices_from_all(simplices1, simplices2)
