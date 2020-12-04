@@ -613,19 +613,20 @@ def create_test_graphs(n_instances: int, n_nodes: int, density: float, path: Pat
         save_count_graph_from_matrix(b, a)
 
 
-def create_control_graphs_from_matrix(n_instances: int, matrix_path: Path, path: Path, type: str, seed: int = 1):
+def create_control_graphs_from_matrix(n_instances: int, matrix_path: Path, path: Path, type: str, seed: int = 1,
+                                      maximal=True):
     np.random.seed(seed)
     if type == 'full':
         for n in tqdm(range(n_instances)):
             m = import_connectivity_matrix(matrix_path, dataframe=False, type = 'csr')
             m = matrix_shuffle(m, exclude_diagonal=True)
             save_path = path / ("seed_"+str(n)) / "graph.flag"
-            save_count_graph_from_matrix(save_path, m)
+            save_count_graph_from_matrix(save_path, m, maximal=maximal)
     if type == 'pathways':
         for n in tqdm(range(n_instances)):
             m = import_connectivity_matrix(matrix_path, dataframe=False, type='csr', pathway_shuffle=True)
             save_path = path / ("seed_"+str(n)) / "graph.flag"
-            save_count_graph_from_matrix(save_path, m)
+            save_count_graph_from_matrix(save_path, m, maximal=maximal)
     if type == 'adjusted':
         for n in tqdm(range(n_instances)):
             m = import_connectivity_matrix(matrix_path, dataframe=False, type='csr')
@@ -633,7 +634,7 @@ def create_control_graphs_from_matrix(n_instances: int, matrix_path: Path, path:
             m = matrix_shuffle(m, exclude_diagonal=True)
             m = adjust_bidirectional_edges(m, int(bm.count_nonzero()/2))
             save_path = path / ("seed_"+str(n)) / "graph.flag"
-            save_count_graph_from_matrix(save_path, m)
+            save_count_graph_from_matrix(save_path, m, maximal=maximal)
     if type == 'shuffled_biedges':
         for n in tqdm(range(n_instances)):
             m = import_connectivity_matrix(matrix_path, dataframe=False, type='csr')
@@ -652,7 +653,7 @@ def create_control_graphs_from_matrix(n_instances: int, matrix_path: Path, path:
                 m[m1.col[index], m1.row[index]] = True
             save_path = path / ("seed_"+str(n)) / "graph.flag"
             m = m.tocsr()
-            save_count_graph_from_matrix(save_path, m)
+            save_count_graph_from_matrix(save_path, m, maximal=maximal)
     if type == 'underlying':
         for n in tqdm(range(n_instances)):
             m = import_connectivity_matrix(matrix_path, dataframe=False, type='csr')
@@ -665,7 +666,7 @@ def create_control_graphs_from_matrix(n_instances: int, matrix_path: Path, path:
                 mdag[m1.col[index], m1.row[index]] = True
             save_path = path / ("seed_" + str(n)) / "graph.flag"
             m = mdag.tocsr()
-            save_count_graph_from_matrix(save_path, m)
+            save_count_graph_from_matrix(save_path, m, maximal=maximal)
 
 
 
