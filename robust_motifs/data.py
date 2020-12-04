@@ -625,12 +625,25 @@ def create_control_graphs_from_matrix(n_instances: int, matrix_path: Path, path:
                 else:
                     m[col, row] = False
             n_edges = m.count_nonzero()
-            for row, col in zip(m1.row, m1.col):
-                if np.random.binomial(1,n_bidirectional_edges/n_edges,1):
-                    m[col, row] = True
+            for index in np.random.choice(np.arange(n_edges), size=n_bidirectional_edges, replace=False):
+                m[m1.col[index], m1.row[index]] = True
             save_path = path / ("seed_"+str(n)) / "graph.flag"
             m = m.tocsr()
             save_count_graph_from_matrix(save_path, m)
+    if type == 'underlying':
+        for n in tqdm(range(n_instances)):
+            m = import_connectivity_matrix(matrix_path, dataframe=False, type='csr')
+            mdag = sp.triu(m + m.T).tolil()
+            bm = sp.triu(m.multiply(m.T))
+            n_bidirectional_edges = bm.count_nonzero()
+            n_edges = mdag.count_nonzero()
+            m1 = mdag.tocoo()
+            for index in np.random.choice(np.arange(n_edges), size=n_bidirectional_edges, replace=False):
+                mdag[m1.col[index], m1.row[index]] = True
+            save_path = path / ("seed_" + str(n)) / "graph.flag"
+            m = mdag.tocsr()
+            save_count_graph_from_matrix(save_path, m)
+
 
 
 class ResultManager:
