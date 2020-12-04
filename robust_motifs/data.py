@@ -269,7 +269,7 @@ def flagser_count(in_path: Path, out_path: Path, overwrite: bool = True, maximal
             return simplices[np.logical_not(np.isin(one_index, simplices_higher_dim_stacked)), :]
 
         cfile = h5py.File(out_path)
-        maximal_path = out_path.with_stem(out_path.stem + "-maximal")
+        maximal_path = out_path.with_name(out_path.stem + "-maximal.h5")
         if overwrite:
             maximal_path.unlink(missing_ok=True)
         maximal_cfile = h5py.File(maximal_path, 'w')
