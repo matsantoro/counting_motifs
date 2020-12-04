@@ -197,7 +197,7 @@ def save_count_er_graph(path: Path, n_nodes: int, density: float):
     return path, pickle_path, count_path
 
 
-def save_count_graph_from_matrix(path: Path, matrix: sp.csr_matrix, verbose: bool = True):
+def save_count_graph_from_matrix(path: Path, matrix: sp.csr_matrix, verbose: bool = True, maximal = False):
     """Saves the graph from the adjacency matrix as a flagser-readable file.
     Pickle-dumps the adjacency matrix. Creates the h5 count file with flagser.
 
@@ -213,7 +213,7 @@ def save_count_graph_from_matrix(path: Path, matrix: sp.csr_matrix, verbose: boo
     count_path = path.parent / Path(path.stem + "-count.h5")
     write_flagser_file(path, matrix, verbose)
     save_sparse_matrix_to_pkl(pickle_path, matrix)
-    flagser_count(path, count_path)
+    flagser_count(path, count_path, maximal=maximal)
     return path, pickle_path, count_path
 
 
@@ -245,7 +245,7 @@ def save_sparse_matrix_to_pkl(path: Path, matrix: sp.csr_matrix):
         )
 
 
-def flagser_count(in_path: Path, out_path: Path, overwrite: bool = True):
+def flagser_count(in_path: Path, out_path: Path, overwrite: bool = True, maximal = False):
     """Uses flagser to build flagser count file.
 
     :argument in_path: (Path) flagser file to read and count.
@@ -255,6 +255,29 @@ def flagser_count(in_path: Path, out_path: Path, overwrite: bool = True):
     if overwrite:
         out_path.unlink(missing_ok=True)
     os.system("flagser-count " + str(in_path) + " --out " + str(out_path))
+
+    if maximal:
+        def unique_identifier(mat):
+            dt = np.dtype([('raw', np.void, mat.shape[1] * mat.dtype.itemsize)])
+            return mat.reshape(np.prod(mat.shape)).view(dt)
+
+        def find_maximal_simplices_from_all(simplices, simplices_higher_dim):
+            one_index = unique_identifier(simplices)
+            simplices_higher_dim_stacked = unique_identifier(np.vstack(
+                [simplices_higher_dim[:, np.delete(np.arange(simplices_higher_dim.shape[1]), x)] for x in
+                 range(simplices_higher_dim.shape[1])]))
+            return simplices[np.logical_not(np.isin(one_index, simplices_higher_dim_stacked)), :]
+
+        cfile = h5py.File(out_path)
+        maximal_path = out_path.with_name("m" + out_path.name)
+        if overwrite:
+            maximal_path.unlink(missing_ok=True)
+        maximal_cfile = h5py.File(maximal_path, 'w')
+        for i in range(len(cfile.keys())-1):
+            simplices1 = cfile['Cells_'+(str(i+1))]
+            simplices2 = cfile['Cells_'+(str(i+2))]
+            new_simplices = find_maximal_simplices_from_all(simplices1, simplices2)
+            maximal_cfile.create_dataset('Cells_'+(str(i+1)), data=new_simplices)
 
 
 def adjust_bidirectional_edges(matrix: sp.csr_matrix, target: int):
