@@ -17,9 +17,9 @@ def plot_matrices(matrices: List[np.ndarray], draw_args: Dict = {}):
         draw_networkx(graph, ax=ax, **draw_args)
     plt.show()
 
-def compare_graphs(dictionary_list, n_instances, name):
+def compare_graphs(dictionary_list, n_instances, name,
+                   title_list = ['Simplices', 'Column', 'Adjusted ER', 'Shuffled biedges', 'Underlying']):
     dictionary_value_list = [dictionary.values() for dictionary in dictionary_list]
-    title_list = ['Simplices', 'Column', 'Adjusted ER', 'Shuffled biedges', 'Underlying']
     for i,elem in enumerate(zip(*dictionary_value_list)):
         fig, axs = plt.subplots(1,len(elem)+1, figsize = [30,10])
         simplices = [m[0,-1] for m in elem]
@@ -97,9 +97,9 @@ def plot_biedge_cumulative(dictionary_list, dim, dim_annot, titles, name):
     fig.savefig(name, facecolor = 'white')
 
 
-def compare_graphs_percent(dictionary_list, n_instances, name):
+def compare_graphs_percent(dictionary_list, n_instances, name,
+                           title_list = ['Simplices', 'Column', 'Adjusted ER', 'Shuffled biedges', 'Underlying']):
     dictionary_value_list = [dictionary.values() for dictionary in dictionary_list]
-    title_list = ['Simplices', 'Column', 'Adjusted ER', 'Shuffled biedges', 'Underlying']
     for i, elem in enumerate(zip(*dictionary_value_list)):
         fig, axs = plt.subplots(1, len(elem) + 1, figsize=[30, 10])
         simplices = [m[0, -1] for m in elem]
@@ -117,7 +117,8 @@ def compare_graphs_percent(dictionary_list, n_instances, name):
         fig.savefig(name + str(i + 1), facecolor="white")
 
 
-def compare_graphs_normalized(dictionary_list, n_instances, name):
+def compare_graphs_normalized(dictionary_list, n_instances, name,
+                              title_list = ['Simplices', 'Column', 'Adjusted ER', 'Shuffled biedges', 'Underlying']):
     dictionary_value_list = [dictionary.values() for dictionary in dictionary_list]
     title_list = ['Simplices', 'Column', 'Adjusted ER', 'Shuffled biedges', 'Underlying']
     for i, elem in enumerate(zip(*dictionary_value_list)):
