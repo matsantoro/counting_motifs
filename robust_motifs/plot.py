@@ -73,7 +73,7 @@ def plot_biedge_counts(dictionary_list, dim, dim_annot, titles, name):
                         backgroundcolor=colormap(annotation_counter / len(titles)))
     ax.legend()
     ax.set_xlabel("Dimension")
-    ax.set_ylabel("Simplices")
+    ax.set_ylabel("Bidirectional edges")
     fig.savefig(name, facecolor='white')
 
 
@@ -93,7 +93,7 @@ def plot_biedge_cumulative(dictionary_list, dim, dim_annot, titles, name):
             ax.annotate(f"{counts[j]:.2E}", (j, counts[j]), (j, ax.get_ylim()[1]/10*annotation_counter), backgroundcolor = colormap(annotation_counter/len(titles)))
     ax.legend()
     ax.set_xlabel("Dimension")
-    ax.set_ylabel("Simplices")
+    ax.set_ylabel("Bidirectional edges")
     fig.savefig(name, facecolor = 'white')
 
 
@@ -105,11 +105,13 @@ def compare_graphs_percent(dictionary_list, n_instances, name,
         simplices = [m[0, -1] for m in elem]
         axs[0].bar(range(len(elem)), simplices)
         for matrix, ax in zip(elem, axs[1:]):
+            hmap = np.tril(matrix)
+            hmap[hmap == 0] = np.nan
             if np.sum(np.tril(matrix)):
-                sns.heatmap(np.tril(matrix) / np.sum(np.tril(matrix)) / n_instances, ax=ax, annot=True, cmap='Reds',
+                sns.heatmap(hmap / np.sum(np.tril(matrix)) / n_instances, ax=ax, annot=True, cmap='Reds',
                             cbar=(ax == axs[-1]), vmin=0, vmax=1)
             else:
-                sns.heatmap(np.tril(matrix) / n_instances, ax=ax, annot=True, cmap='Reds',
+                sns.heatmap(hmap / n_instances, ax=ax, annot=True, cmap='Reds',
                             cbar=(ax == axs[-1]), vmin=0, vmax=1)
 
         for title, ax in zip(title_list, axs):
