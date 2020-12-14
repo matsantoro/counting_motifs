@@ -639,7 +639,7 @@ def maximal_matrices_from_file(path: Path):
                                 sp.csr_matrix((np.ones((len(edges),), dtype = bool),edges),
                                               shape = matrix.shape)
                                   )
-        edges = np.unique(np.vstack([simplices[:, [x, x+1]] for x in range(simplices.shape[1]-1), i]))
+        edges = np.unique(np.vstack([simplices[:, [x, x+1]] for x in range(simplices.shape[1]-1)]))
         save_sparse_matrix_to_pkl(path.with_name(f'maximal_dim{i + 2}_spine.pkl'),
                                   sp.csr_matrix((np.ones((len(edges),), dtype=bool), edges),
                                                 shape=matrix.shape))
