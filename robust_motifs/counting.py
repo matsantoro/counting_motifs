@@ -1,5 +1,6 @@
 import datetime
 import h5py
+from itertools import combinations
 import multiprocessing as mp
 from multiprocessing.shared_memory import SharedMemory
 import numpy as np
@@ -11,7 +12,7 @@ import scipy.sparse as sp
 from tqdm import tqdm
 from typing import Any, Dict, List, Tuple
 
-from .data import MPDataManager, load_sparse_matrix_from_pkl
+from .data import MPDataManager, load_sparse_matrix_from_pkl, save_sparse_matrix_to_pkl
 
 
 def worker_initializer(path):
@@ -625,3 +626,24 @@ def bcount_from_file(path: Path, dimension: int):
     counts_per_dimension = count_bidirectional_edges(matrix, count_file, dimension)
     with open(path.with_name("bcounts.pkl"), 'wb') as file:
         pickle.dump(counts_per_dimension, file)
+
+def maximal_matrices_from_file(path: Path):
+    matrix = load_sparse_matrix_from_pkl(path)
+    mcount_file = h5py.File(path.with_name(path.stem + "-count-maximal.h5"))
+    for i in range(len(mcount_file.keys())):
+        simplices = np.array(mcount_file['Cells_' + str(i+1)])
+        edges = np.unique(np.vstack(
+        [simplices[:, x] for x in
+         combinations(range(simplices.shape[1]),2)]))
+        save_sparse_matrix_to_pkl(path.with_name(f'maximal_dim{i+2}_any.pkl'),
+                                sp.csr_matrix((np.ones((len(edges),), dtype = bool),edges),
+                                              shape = matrix.shape)
+                                  )
+        edges = np.unique(np.vstack([simplices[:, [x, x+1]] for x in range(simplices.shape[1]-1), i]))
+        save_sparse_matrix_to_pkl(path.with_name(f'maximal_dim{i + 2}_spine.pkl'),
+                                  sp.csr_matrix((np.ones((len(edges),), dtype=bool), edges),
+                                                shape=matrix.shape))
+        edges = np.unique(simplices[:, [-2, -1]])
+        save_sparse_matrix_to_pkl(path.with_name(f'maximal_dim{i + 2}_end.pkl'),
+                                  sp.csr_matrix((np.ones((len(edges),), dtype=bool), edges),
+                                                shape=matrix.shape))
