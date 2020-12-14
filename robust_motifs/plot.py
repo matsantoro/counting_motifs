@@ -109,10 +109,10 @@ def compare_graphs_percent(dictionary_list, n_instances, name,
             hmap[hmap == 0] = np.nan
             if np.sum(np.tril(matrix)):
                 sns.heatmap(hmap / np.sum(np.tril(matrix)) / n_instances, ax=ax, annot=True, cmap='Reds',
-                            cbar=(ax == axs[-1]), vmin=0, vmax=1)
+                            cbar=(ax == axs[-1]), vmin=0, vmax=0.12)
             else:
                 sns.heatmap(hmap / n_instances, ax=ax, annot=True, cmap='Reds',
-                            cbar=(ax == axs[-1]), vmin=0, vmax=1)
+                            cbar=(ax == axs[-1]), vmin=0, vmax=0.12)
 
         for title, ax in zip(title_list, axs):
             ax.set_title(title)
