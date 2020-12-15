@@ -633,7 +633,7 @@ def maximal_matrices_from_file(path: Path):
     for i in range(len(mcount_file.keys())):
         simplices = np.array(mcount_file['Cells_' + str(i+1)])
         edges = np.unique(np.vstack(
-        [simplices[:, x] for x in
+        [np.unique(simplices[:, x]) for x in
          combinations(range(simplices.shape[1]),2)]))
         save_sparse_matrix_to_pkl(path.with_name(f'maximal_dim{i+2}_any.pkl'),
                                 sp.csr_matrix((np.ones((len(edges),), dtype = bool),edges),
