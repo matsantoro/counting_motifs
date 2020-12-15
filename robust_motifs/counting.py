@@ -630,20 +630,22 @@ def bcount_from_file(path: Path, dimension: int):
 def maximal_matrices_from_file(path: Path):
     matrix = load_sparse_matrix_from_pkl(path)
     mcount_file = h5py.File(path.with_name(path.stem + "-count-maximal.h5"))
-    for i in range(len(mcount_file.keys())):
+    for i in range(1,len(mcount_file.keys())):
         simplices = np.array(mcount_file['Cells_' + str(i+1)])
         edges = np.unique(np.vstack(
         [simplices[:, x] for x in
-         combinations(range(simplices.shape[1]),2)]))
-        save_sparse_matrix_to_pkl(path.with_name(f'maximal_dim{i+2}_any.pkl'),
-                                sp.csr_matrix((np.ones((len(edges),), dtype = bool),edges),
+         combinations(range(simplices.shape[1]),2)]), axis = 1)
+        save_sparse_matrix_to_pkl(path.with_name(f'maximal_dim{i+1}_any.pkl'),
+                                sp.csr_matrix((np.ones((edges.shape[0],), dtype = bool), (edges[:,0],edges[:,1])),
                                               shape = matrix.shape)
                                   )
-        edges = np.unique(np.vstack([simplices[:, [x, x+1]] for x in range(simplices.shape[1]-1)]))
-        save_sparse_matrix_to_pkl(path.with_name(f'maximal_dim{i + 2}_spine.pkl'),
-                                  sp.csr_matrix((np.ones((len(edges),), dtype=bool), edges),
-                                                shape=matrix.shape))
-        edges = np.unique(simplices[:, [-2, -1]])
-        save_sparse_matrix_to_pkl(path.with_name(f'maximal_dim{i + 2}_end.pkl'),
-                                  sp.csr_matrix((np.ones((len(edges),), dtype=bool), edges),
-                                                shape=matrix.shape))
+        edges = np.unique(np.vstack([simplices[:, [x, x+1]] for x in range(simplices.shape[1]-1)]), axis = 1)
+        save_sparse_matrix_to_pkl(path.with_name(f'maximal_dim{i + 1}_spine.pkl'),
+                                  sp.csr_matrix((np.ones((edges.shape[0],), dtype = bool), (edges[:,0],edges[:,1])),
+                                              shape = matrix.shape)
+                                  )
+        edges = np.unique(simplices[:, [-2, -1]], axis = 1)
+        save_sparse_matrix_to_pkl(path.with_name(f'maximal_dim{i + 1}_end.pkl'),
+                                  sp.csr_matrix((np.ones((edges.shape[0],), dtype = bool), (edges[:,0],edges[:,1])),
+                                              shape = matrix.shape)
+                                  )
