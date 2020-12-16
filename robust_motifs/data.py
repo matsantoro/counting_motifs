@@ -1024,7 +1024,7 @@ class ResultManager:
             es_morph_counts[morph_dict[get_morph(zones_array[simplex[-1]])]] += espointers[i + 1] - espointers[i]
         return es_morph_counts, bs_morph_counts, morph_list
 
-    def get_2d_es_morph_hist_count(self, original_file_path, processed_h5_path, dimension):
+    def get_2d_es_layer_hist_count(self, original_file_path, processed_h5_path, dimension):
         matrix = import_connectivity_matrix(original_file_path, dataframe=True)
         complex_file_path = processed_h5_path
         complex_file = h5py.File(complex_file_path)
@@ -1052,6 +1052,7 @@ class ResultManager:
 
         es_morph_matrix = np.zeros((len(morph_list), len(morph_list)))
         bs_morph_matrix = np.zeros((len(morph_list), len(morph_list)))
+        biedge_morph_matrix = np.zeros((len(morph_list), len(morph_list)))
         simplex_list = np.array(complex_file['Cells_' + str(dimension)])
         for i, simplex in tqdm(enumerate(simplex_list)):
             sink_morph = morph_dict[get_morph(zones_array[simplex[-1]])]
@@ -1059,7 +1060,56 @@ class ResultManager:
                 bs_morph_matrix[sink_morph, morph_dict[get_morph(zones_array[element])]] += 1
             for element in esends[espointers[i]:espointers[i+1]]:
                 es_morph_matrix[sink_morph, morph_dict[get_morph(zones_array[element])]] += 1
-        return es_morph_matrix, bs_morph_matrix, morph_list
+        bmsparse = msparse.multiply(msparse.T).tocsr()
+        for i in range(len(bmsparse.indptr)-1):
+            row_morph = morph_dict[get_morph(zones_array[i])]
+            for col in bmsparse.indices[bmsparse.indptr[i]:bmsparse.indptr[i+1]]:
+                biedge_morph_matrix[row_morph, morph_dict[get_morph(zones_array[col])]] += 1
+        return es_morph_matrix, bs_morph_matrix, biedge_morph_matrix, morph_list
+
+    def get_2d_es_morph_hist_count(self, original_file_path, processed_h5_path, dimension):
+        matrix = import_connectivity_matrix(original_file_path, dataframe=True)
+        msparse = import_connectivity_matrix(original_file_path, dataframe=False, type = 'csr')
+        complex_file_path = processed_h5_path
+        complex_file = h5py.File(complex_file_path)
+
+        def get_morph(denom):
+            return denom[3:].lstrip('_')
+
+        zones_array = np.array([elem[0] for elem in matrix.index.values])
+        morph_list = sorted(list(set([get_morph(elem[0]) for elem in matrix.index.unique().values])))
+        morph_dict = {}
+        for i, element in enumerate(morph_list):
+            morph_dict.update({element: i})
+
+        bs_morph_counts = np.zeros((len(morph_list),))
+        es_morph_counts = np.zeros((len(morph_list),))
+
+        pbs = processed_h5_path.parent / ("BS_D" + str(dimension) + "indptr.npz")
+        pes = processed_h5_path.parent / ("ES_D" + str(dimension) + "indptr.npz")
+        bspointers = np.load(pbs)['arr_0']
+        espointers = np.load(pes)['arr_0']
+        pbs = processed_h5_path.parent / ("BS_D" + str(dimension) + ".npz")
+        pes = processed_h5_path.parent / ("ES_D" + str(dimension) + ".npz")
+        bsends = np.load(pbs)['arr_0']
+        esends = np.load(pes)['arr_0']
+
+        es_morph_matrix = np.zeros((len(morph_list), len(morph_list)))
+        bs_morph_matrix = np.zeros((len(morph_list), len(morph_list)))
+        biedge_morph_matrix = np.zeros((len(morph_list), len(morph_list)))
+        simplex_list = np.array(complex_file['Cells_' + str(dimension)])
+        for i, simplex in tqdm(enumerate(simplex_list)):
+            sink_morph = morph_dict[get_morph(zones_array[simplex[-1]])]
+            for element in bsends[bspointers[i]:bspointers[i+1]]:
+                bs_morph_matrix[sink_morph, morph_dict[get_morph(zones_array[element])]] += 1
+            for element in esends[espointers[i]:espointers[i+1]]:
+                es_morph_matrix[sink_morph, morph_dict[get_morph(zones_array[element])]] += 1
+        bmsparse = msparse.multiply(msparse.T).tocsr()
+        for i in range(len(bmsparse.indptr)-1):
+            row_morph = morph_dict[get_morph(zones_array[i])]
+            for col in bmsparse.indices[bmsparse.indptr[i]:bmsparse.indptr[i+1]]:
+                biedge_morph_matrix[row_morph, morph_dict[get_morph(zones_array[col])]] += 1
+        return es_morph_matrix, bs_morph_matrix, biedge_morph_matrix, morph_list
 
 
 def create_simplices(dimension: int, instances: int, extra_edges: int, path: Path = None,
