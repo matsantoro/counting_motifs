@@ -1026,6 +1026,7 @@ class ResultManager:
 
     def get_2d_es_layer_hist_count(self, original_file_path, processed_h5_path, dimension):
         matrix = import_connectivity_matrix(original_file_path, dataframe=True)
+        msparse = import_connectivity_matrix(original_file_path, dataframe=False, type='csr')
         complex_file_path = processed_h5_path
         complex_file = h5py.File(complex_file_path)
 
