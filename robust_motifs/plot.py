@@ -161,11 +161,11 @@ def compare_graphs_diff(dictionary_list, n_instances, name,
         simplices = [m[0, -1] for m in elem]
         axs[0][0].bar(range(len(elem)), simplices)
 
-        d1 = 0
+        d = 0
         for matrix in elem:
             matrix_max = np.max(np.tril(matrix))
-            if matrix_max > d1:
-                d1 = matrix_max
+            if matrix_max > d:
+                d = matrix_max
         diffs = [elem[0] - comparison for comparison in elem[1:]]
         vmin = 0
         vmax = 0
@@ -201,11 +201,11 @@ def compare_graphs_diff_percent(dictionary_list, n_instances, name,
         simplices = [m[0, -1] for m in elem]
         axs[0][0].bar(range(len(elem)), simplices)
 
-        d1 = 0
+        d = 0
         for matrix in elem:
             matrix_max = np.max(np.tril(matrix))
-            if matrix_max > d1:
-                d1 = matrix_max
+            if matrix_max > d:
+                d = matrix_max
         diffs = [elem[0] - comparison for comparison in elem[1:]]
         vmin = 0
         vmax = 0
