@@ -177,15 +177,19 @@ def compare_graphs_diff(dictionary_list, n_instances, name,
             if matrix_min < vmin:
                 vmin = matrix_min
         for matrix, ax in zip(elem[1:], axs[0][1:]):
-            sns.heatmap(np.tril(matrix) / n_instances, ax=ax, annot=True, cmap='Reds',
+            matrix = np.tril(matrix)
+            matrix[matrix == 0] = np.nan
+            sns.heatmap(matrix / n_instances, ax=ax, annot=True, cmap='Reds',
                         cbar=(ax == axs[0][-1]), vmin=0, vmax=d)
         for matrix, ax in zip(diffs, axs[1][1:]):
-            sns.heatmap(np.tril(matrix) / n_instances, ax=ax, annot=True, cmap='Reds',
+            matrix = np.tril(matrix)
+            matrix[matrix == 0] = np.nan
+            sns.heatmap(matrix / n_instances, ax=ax, annot=True, cmap='Reds',
                         cbar=(ax == axs[1][-1]), vmin=vmin, vmax=vmax)
         for title, ax in zip(title_list[2:], axs[0][1:]):
             ax.set_title(title)
         axs[0][0].set_title(title_list[0])
-        axs[1][0].set_title(title_list[0])
+        axs[1][0].set_title(title_list[1])
 
         sns.heatmap(np.tril(elem[0]) / n_instances, ax=axs[1][0], annot=True, cmap='Reds',
                     cbar=False, vmin=0, vmax=d)
@@ -193,12 +197,12 @@ def compare_graphs_diff(dictionary_list, n_instances, name,
         fig.savefig(name + str(i + 1), facecolor="white")
 
 
-def compare_graphs_diff_percent(dictionary_list, n_instances, name,
+def compare_graphs_diff_normalized(dictionary_list, n_instances, name,
                               title_list = ['Simplices', 'Column', 'Adjusted ER', 'Shuffled biedges', 'Underlying']):
     dictionary_value_list = [dictionary.values() for dictionary in dictionary_list]
     title_list = ['Simplices', 'Column', 'Adjusted ER', 'Shuffled biedges', 'Underlying']
     for i, elem in enumerate(zip(*dictionary_value_list)):
-        elem = [matrix/matrix[0][-1] for matrix in elem]
+        elem = [matrix/matrix[0][-1] if matrix[0][-1] else matrix for matrix in elem]
         fig, axs = plt.subplots(2, len(elem), figsize=[30, 21])
         simplices = [m[0, -1] for m in elem]
         axs[0][0].bar(range(len(elem)), simplices)
@@ -219,15 +223,19 @@ def compare_graphs_diff_percent(dictionary_list, n_instances, name,
             if matrix_min < vmin:
                 vmin = matrix_min
         for matrix, ax in zip(elem[1:], axs[0][1:]):
-            sns.heatmap(np.tril(matrix) / n_instances, ax=ax, annot=True, cmap='Reds',
+            matrix = np.tril(matrix)
+            matrix[matrix == 0] = np.nan
+            sns.heatmap(matrix / n_instances, ax=ax, annot=True, cmap='Reds',
                         cbar=(ax == axs[0][-1]), vmin=0, vmax=d)
         for matrix, ax in zip(diffs, axs[1][1:]):
-            sns.heatmap(np.tril(matrix) / n_instances, ax=ax, annot=True, cmap='Reds',
+            matrix = np.tril(matrix)
+            matrix[matrix == 0] = np.nan
+            sns.heatmap(matrix / n_instances, ax=ax, annot=True, cmap='Reds',
                         cbar=(ax == axs[1][-1]), vmin=vmin, vmax=vmax)
         for title, ax in zip(title_list[2:], axs[0][1:]):
             ax.set_title(title)
         axs[0][0].set_title(title_list[0])
-        axs[1][0].set_title(title_list[0])
+        axs[1][0].set_title(title_list[1])
 
         sns.heatmap(np.tril(elem[0]) / n_instances, ax=axs[1][0], annot=True, cmap='Reds',
                     cbar=False, vmin=0, vmax=d)
