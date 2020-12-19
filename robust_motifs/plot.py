@@ -182,8 +182,10 @@ def compare_graphs_diff(dictionary_list, n_instances, name,
         for matrix, ax in zip(diffs, axs[1][1:]):
             sns.heatmap(np.tril(matrix) / n_instances, ax=ax, annot=True, cmap='Reds',
                         cbar=(ax == axs[1][-1]), vmin=vmin, vmax=vmax)
-        for title, ax in zip(title_list, axs[0]):
+        for title, ax in zip(title_list[2:], axs[0][1:]):
             ax.set_title(title)
+        axs[0][0].set_title(title_list[0])
+        axs[1][0].set_title(title_list[0])
 
         sns.heatmap(np.tril(elem[0]) / n_instances, ax=axs[1][0], annot=True, cmap='Reds',
                     cbar=False, vmin=0, vmax=d)
@@ -222,8 +224,10 @@ def compare_graphs_diff_percent(dictionary_list, n_instances, name,
         for matrix, ax in zip(diffs, axs[1][1:]):
             sns.heatmap(np.tril(matrix) / n_instances, ax=ax, annot=True, cmap='Reds',
                         cbar=(ax == axs[1][-1]), vmin=vmin, vmax=vmax)
-        for title, ax in zip(title_list, axs[0]):
+        for title, ax in zip(title_list[2:], axs[0][1:]):
             ax.set_title(title)
+        axs[0][0].set_title(title_list[0])
+        axs[1][0].set_title(title_list[0])
 
         sns.heatmap(np.tril(elem[0]) / n_instances, ax=axs[1][0], annot=True, cmap='Reds',
                     cbar=False, vmin=0, vmax=d)
