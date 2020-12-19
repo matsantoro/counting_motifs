@@ -57,43 +57,51 @@ def plot_simplex_counts(dictionary_list, dim, dim_annot, titles, name):
     fig.savefig(name, facecolor='white')
 
 
-def plot_biedge_counts(dictionary_list, dim, dim_annot, titles, name):
+def plot_biedge_counts(dictionary_list, dim, dim_annot, titles, name, plot_table = True):
     dictionary_value_list = [list(dictionary.values()) for dictionary in dictionary_list]
     colormap = cm.get_cmap('Set1')
     dimensions = list(dictionary_list[0].keys())
     fig = plt.figure(figsize=[10, 6])
     ax = fig.add_subplot()
     annotation_counter = 0
+    table = []
     for elem, title in zip(dictionary_value_list, titles):
         annotation_counter += 1
         counts = [np.sum(np.tril(value)) for value in elem[:dim + 1]]
-        ax.plot(dimensions[:dim + 1], counts, label=title, color=colormap(annotation_counter / len(titles)))
-        for j in range(dim_annot, dim + 1):
-            ax.annotate(f"{counts[j]:.2E}", (j, counts[j]), (j, ax.get_ylim()[1] / 10 * annotation_counter),
-                        backgroundcolor=colormap(annotation_counter / len(titles)))
-    ax.legend()
+        ax.plot(dimensions[:dim + 1], counts, label=title, color=colormap(annotation_counter / len(titles)),
+               marker = '.')
+        table.append([f"{count:.2E}" for count in counts])
+    table = [list(elem) for elem in zip(*table)]
+    ax.legend(loc = 'upper left')
     ax.set_xlabel("Dimension")
     ax.set_ylabel("Bidirectional edges")
+    if plot_table:
+        ax.table(table, colLabels = titles, rowLabels = [str(elem) for elem in dimensions[:dim + 1]],
+             bbox = [1,0,0.30,1])
     fig.savefig(name, facecolor='white')
 
 
-def plot_biedge_cumulative(dictionary_list, dim, dim_annot, titles, name):
+def plot_biedge_cumulative(dictionary_list, dim, dim_annot, titles, name, plot_table = True):
     dictionary_value_list = [list(dictionary.values()) for dictionary in dictionary_list]
     colormap = cm.get_cmap('Set1')
     dimensions = list(dictionary_list[0].keys())
     fig = plt.figure(figsize = [10,6])
     ax = fig.add_subplot()
     annotation_counter = 0
+    table = []
     for elem, title in zip(dictionary_value_list, titles):
         annotation_counter += 1
         counts = [np.sum(np.tril(value)) for value in elem[:dim+1]]
         counts = np.cumsum(counts)
         ax.plot(dimensions[:dim+1], counts, label = title, color = colormap(annotation_counter/len(titles)))
-        for j in range(dim_annot, dim+1):
-            ax.annotate(f"{counts[j]:.2E}", (j, counts[j]), (j, ax.get_ylim()[1]/10*annotation_counter), backgroundcolor = colormap(annotation_counter/len(titles)))
+        table.append([f"{count:.2E}" for count in counts])
+    table = [list(elem) for elem in zip(*table)]
     ax.legend()
     ax.set_xlabel("Dimension")
     ax.set_ylabel("Bidirectional edges")
+    if plot_table:
+        ax.table(table, colLabels = titles, rowLabels = [str(elem) for elem in dimensions[:dim + 1]],
+             bbox = [1,0,0.30,1])
     fig.savefig(name, facecolor = 'white')
 
 
