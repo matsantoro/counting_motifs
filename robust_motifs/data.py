@@ -1289,7 +1289,7 @@ class BcountResultManager:
                 a.append([elem, int(dim+1), group, "S",str(file)])
             for dim, elem in enumerate(np.nan_to_num(es_count[:, 1]/es_count[:, 0]).tolist()):
                 a.append([elem, int(dim+2), group, "RES",str(file)])
-            a = np.load("bcount.pkl")
+            a = np.load("bcounts.pkl")
             bs_count = [elem[-1][-2] for elem in a.values()]
             for dim, elem in enumerate(bs_count[:, 1].tolist()):
                 a.append([elem, int(dim+2), group, "BS", str(file)])
