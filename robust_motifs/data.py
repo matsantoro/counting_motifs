@@ -1289,8 +1289,8 @@ class BcountResultManager:
                 a.append([elem, int(dim+1), group, "S",str(file)])
             for dim, elem in enumerate(np.nan_to_num(es_count[:, 1]/es_count[:, 0]).tolist()):
                 a.append([elem, int(dim+2), group, "RES",str(file)])
-            a = pickle.load(open(file/"bcounts.pkl",'rb'))
-            bs_count = np.array([elem[-1][-2] for elem in a.values()])
+            bcounts = pickle.load(open(file/"bcounts.pkl",'rb'))
+            bs_count = np.array([elem[-1][-2] for elem in bcounts.values()])
             bs_count = bs_count[:len(es_count)]
             for dim, elem in enumerate(bs_count):
                 a.append([elem, int(dim+2), group, "BS", str(file)])
