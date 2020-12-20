@@ -1259,3 +1259,50 @@ def create_digraphs(dimension: int, n_edges: int, instances: int, extra_edges: i
                 counts_per_dimension[i] += matrix[simplex].T[simplex].T
     with open(path / "bcount.pkl", 'wb') as f:
         pickle.dump(counts_per_dimension, f)
+
+
+class BcountResultManager:
+    def __init__(self, path: Path):
+        self.processed_file_list = []
+        for file in sorted(path.glob("**/ES_count.npz")):
+            self.processed_file_list.append(file.parent)
+
+    def get_counts_dataframe(self, group: str):
+        a = []
+        for file in self.processed_file_list:
+            try:
+                matrix_path = file / (file.parts[-1] + ".pkl")
+                m = load_sparse_matrix_from_pkl(matrix_path)
+            except:
+                matrix_path = file / "graph.pkl"
+                m = load_sparse_matrix_from_pkl(matrix_path)
+            bm = m.multiply(m.T)
+            es_count = np.load(file / "ES_count.npz")['arr_0']
+            a.append([m.shape[0], 0, group, "ES", str(file)])
+            a.append([m.shape[0], 0, group, "BS", str(file)])
+            a.append([m.shape[0], 0, group, "S", str(file)])
+            a.append([bm.count_nonzero(), 1, group, "ES", str(file)])
+            a.append([bm.count_nonzero()/2, 1, group, "BS", str(file)])
+            for dim, elem in enumerate(es_count[:, 1].tolist()):
+                a.append([elem, int(dim+2), group, "ES",str(file)])
+            for dim, elem in enumerate(es_count[:, 0].tolist()):
+                a.append([elem, int(dim+1), group, "S",str(file)])
+            for dim, elem in enumerate(np.nan_to_num(es_count[:, 1]/es_count[:, 0]).tolist()):
+                a.append([elem, int(dim+2), group, "RES",str(file)])
+            a = np.load("bcount.pkl")
+            bs_count = [elem[-1][-2] for elem in a.values()]
+            for dim, elem in enumerate(bs_count[:, 1].tolist()):
+                a.append([elem, int(dim+2), group, "BS", str(file)])
+            for dim, elem in enumerate(np.nan_to_num(bs_count[:, 1] / es_count[:, 0]).tolist()):
+                a.append([elem, int(dim+2), group, "RBS", str(file)])
+
+            for dim, elem in enumerate((
+                    np.concatenate([np.array([bm.count_nonzero()]),bs_count[:, 1]])[:-1] / es_count[:,0]
+                    ).tolist()):
+                a.append([elem, int(dim+1), group, "RBS+", str(file)])
+            for dim, elem in enumerate((
+                    np.concatenate([np.array([bm.count_nonzero()]),es_count[:, 1]])[:-1] / es_count[:,0]
+                    ).tolist()):
+                a.append([elem, int(dim+1), group, "RES+", str(file)])
+
+        return pd.DataFrame(a, columns=["count", "dim", "group", "motif", "filename"])
