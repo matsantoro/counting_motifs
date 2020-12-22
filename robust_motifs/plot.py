@@ -62,7 +62,7 @@ def plot_biedge_counts(dictionary_list, dim, dim_annot, titles, name, plot_table
     dictionary_value_list = [list(dictionary.values()) for dictionary in dictionary_list]
     colormap = cm.get_cmap('Set1')
     dimensions = list(dictionary_list[0].keys())
-    fig = plt.figure(figsize=[10, 6])
+    fig = plt.figure(figsize=[20, 12])
     ax = fig.add_subplot()
     annotation_counter = 0
     table = []
@@ -86,7 +86,7 @@ def plot_biedge_cumulative(dictionary_list, dim, dim_annot, titles, name, plot_t
     dictionary_value_list = [list(dictionary.values()) for dictionary in dictionary_list]
     colormap = cm.get_cmap('Set1')
     dimensions = list(dictionary_list[0].keys())
-    fig = plt.figure(figsize = [10,6])
+    fig = plt.figure(figsize = [20,12])
     ax = fig.add_subplot()
     annotation_counter = 0
     table = []
