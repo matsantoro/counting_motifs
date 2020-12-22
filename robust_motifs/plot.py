@@ -58,7 +58,9 @@ def plot_simplex_counts(dictionary_list, dim, dim_annot, titles, name):
     fig.savefig(name, facecolor='white')
 
 
-def plot_biedge_counts(dictionary_list, dim, dim_annot, titles, name, plot_table = True):
+def plot_biedge_counts(dictionary_list, dim, dim_annot, titles, name, plot_table = True,
+                       ylabel = "Bidirectional edges",
+                       title = None):
     dictionary_value_list = [list(dictionary.values()) for dictionary in dictionary_list]
     colormap = cm.get_cmap('Set1')
     dimensions = list(dictionary_list[0].keys())
@@ -75,14 +77,18 @@ def plot_biedge_counts(dictionary_list, dim, dim_annot, titles, name, plot_table
     table = [list(elem) for elem in zip(*table)]
     ax.legend(loc = 'upper left')
     ax.set_xlabel("Dimension")
-    ax.set_ylabel("Bidirectional edges")
+    ax.set_ylabel(ylabel)
+    if title:
+        ax.set_title(title)
     if plot_table:
         ax.table(table, colLabels = titles, rowLabels = [str(elem) for elem in dimensions[:dim + 1]],
              bbox = [1,0,0.30,1])
     fig.savefig(name, facecolor='white', bbox_inches = 'tight')
 
 
-def plot_biedge_cumulative(dictionary_list, dim, dim_annot, titles, name, plot_table = True):
+def plot_biedge_cumulative(dictionary_list, dim, dim_annot, titles, name, plot_table = True,
+                           ylabel = "Bidirectional edges cumulative",
+                           title = None):
     dictionary_value_list = [list(dictionary.values()) for dictionary in dictionary_list]
     colormap = cm.get_cmap('Set1')
     dimensions = list(dictionary_list[0].keys())
@@ -100,7 +106,9 @@ def plot_biedge_cumulative(dictionary_list, dim, dim_annot, titles, name, plot_t
     table = [list(elem) for elem in zip(*table)]
     ax.legend()
     ax.set_xlabel("Dimension")
-    ax.set_ylabel("Bidirectional edges")
+    ax.set_ylabel(ylabel)
+    if title:
+        ax.set_title(title)
     if plot_table:
         ax.table(table, colLabels = titles, rowLabels = [str(elem) for elem in dimensions[:dim + 1]],
              bbox = [1,0,0.30,1])
