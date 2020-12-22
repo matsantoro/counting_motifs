@@ -24,6 +24,9 @@ def compare_graphs(dictionary_list, n_instances, name,
         fig, axs = plt.subplots(1,len(elem)+1, figsize = [30,10])
         simplices = [m[0,-1] for m in elem]
         axs[0].bar(range(len(elem)),simplices)
+        axs[0].set_xticklabels(title_list[1:])
+        plt.setp(axs[0].get_xticklabels(), rotation=45, ha="right",
+                 rotation_mode="anchor")
         d = 0
         for matrix in elem:
             matrix_max = np.max(np.tril(matrix))
@@ -122,6 +125,9 @@ def compare_graphs_percent(dictionary_list, n_instances, name,
         fig, axs = plt.subplots(1, len(elem) + 1, figsize=[30, 10])
         simplices = [m[0, -1] for m in elem]
         axs[0].bar(range(len(elem)), simplices)
+        axs[0].set_xticklabels(title_list[1:])
+        plt.setp(axs[0].get_xticklabels(), rotation=45, ha="right",
+                 rotation_mode="anchor")
         for matrix, ax in zip(elem, axs[1:]):
             hmap = np.tril(matrix)
             hmap[hmap == 0] = np.nan
@@ -146,6 +152,9 @@ def compare_graphs_normalized(dictionary_list, n_instances, name,
         fig, axs = plt.subplots(1, len(elem) + 1, figsize=[30, 10])
         simplices = [m[0, -1] for m in elem]
         axs[0].bar(range(len(elem)), simplices)
+        axs[0].set_xticklabels(title_list[1:])
+        plt.setp(axs[0].get_xticklabels(), rotation=45, ha="right",
+                 rotation_mode="anchor")
         for matrix, ax in zip(elem, axs[1:]):
             if matrix[0][-1]:
                 sns.heatmap(np.tril(matrix) / matrix[0][-1] / n_instances, ax=ax, annot=True, cmap='Reds',
@@ -168,6 +177,9 @@ def compare_graphs_diff(dictionary_list, n_instances, name,
         fig, axs = plt.subplots(2, len(elem), figsize=[30, 21])
         simplices = [m[0, -1] for m in elem]
         axs[0][0].bar(range(len(elem)), simplices)
+        axs[0][0].set_xticklabels(title_list[1:])
+        plt.setp(axs[0][0].get_xticklabels(), rotation=45, ha="right",
+                 rotation_mode="anchor")
 
         d = 0
         for matrix in elem:
@@ -210,10 +222,13 @@ def compare_graphs_diff_normalized(dictionary_list, n_instances, name,
     dictionary_value_list = [dictionary.values() for dictionary in dictionary_list]
     title_list = ['Simplices', 'Column', 'Adjusted ER', 'Shuffled biedges', 'Underlying']
     for i, elem in enumerate(zip(*dictionary_value_list)):
+        simplices = [m[0, -1] for m in elem]
         elem = [matrix/matrix[0][-1] if matrix[0][-1] else matrix for matrix in elem]
         fig, axs = plt.subplots(2, len(elem), figsize=[30, 21])
-        simplices = [m[0, -1] for m in elem]
         axs[0][0].bar(range(len(elem)), simplices)
+        axs[0][0].set_xticklabels(title_list[1:])
+        plt.setp(axs[0][0].get_xticklabels(), rotation=45, ha="right",
+                 rotation_mode="anchor")
 
         d = 0
         for matrix in elem:
@@ -257,10 +272,14 @@ def compare_graphs_diff_percent(dictionary_list, n_instances, name,
     dictionary_value_list = [dictionary.values() for dictionary in dictionary_list]
     title_list = ['Simplices', 'Column', 'Adjusted ER', 'Shuffled biedges', 'Underlying']
     for i, elem in enumerate(zip(*dictionary_value_list)):
+        simplices = [m[0, -1] for m in elem]
         elem = [matrix/np.sum(np.tril(matrix)) if matrix[0][-1] else matrix for matrix in elem]
         fig, axs = plt.subplots(2, len(elem), figsize=[30, 21])
-        simplices = [m[0, -1] for m in elem]
+
         axs[0][0].bar(range(len(elem)), simplices)
+        axs[0][0].set_xticklabels(title_list[1:])
+        plt.setp(axs[0][0].get_xticklabels(), rotation=45, ha="right",
+                 rotation_mode="anchor")
 
         d = 0
         for matrix in elem:
