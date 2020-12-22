@@ -72,7 +72,7 @@ def plot_biedge_counts(dictionary_list, dim, dim_annot, titles, name, plot_table
         annotation_counter += 1
         counts = [np.sum(np.tril(value)) for value in elem[:dim + 1]]
         ax.plot(dimensions[:dim + 1], counts, label=title, color=colormap(annotation_counter / len(titles)),
-               marker = '.')
+               marker = '.', linewidth = 3)
         table.append([f"{count:.2E}" for count in counts])
     table = [list(elem) for elem in zip(*table)]
     ax.legend(loc = 'upper left')
@@ -101,7 +101,7 @@ def plot_biedge_cumulative(dictionary_list, dim, dim_annot, titles, name, plot_t
         counts = [np.sum(np.tril(value)) for value in elem[:dim+1]]
         counts = np.cumsum(counts)
         ax.plot(dimensions[:dim+1], counts, label = title, color = colormap(annotation_counter/len(titles)),
-                marker = '.')
+                marker = '.', linewidth = 3)
         table.append([f"{count:.2E}" for count in counts])
     table = [list(elem) for elem in zip(*table)]
     ax.legend()
