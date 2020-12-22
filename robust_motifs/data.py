@@ -1298,7 +1298,7 @@ class BcountResultManager:
                 a.append([elem, int(dim+2), group, "RBS", str(file)])
 
             for dim, elem in enumerate((
-                    np.concatenate([np.array([bm.count_nonzero()]),bs_count])[:-1] / es_count[:,0]
+                    np.concatenate([np.array([bm.count_nonzero()/2]),bs_count])[:-1] / es_count[:,0]
                     ).tolist()):
                 a.append([elem, int(dim+1), group, "RBS+", str(file)])
             for dim, elem in enumerate((
