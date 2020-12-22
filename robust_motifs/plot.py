@@ -79,7 +79,7 @@ def plot_biedge_counts(dictionary_list, dim, dim_annot, titles, name, plot_table
     if plot_table:
         ax.table(table, colLabels = titles, rowLabels = [str(elem) for elem in dimensions[:dim + 1]],
              bbox = [1,0,0.30,1])
-    fig.savefig(name, facecolor='white')
+    fig.savefig(name, facecolor='white', bbox_inches = 'tight')
 
 
 def plot_biedge_cumulative(dictionary_list, dim, dim_annot, titles, name, plot_table = True):
@@ -104,7 +104,7 @@ def plot_biedge_cumulative(dictionary_list, dim, dim_annot, titles, name, plot_t
     if plot_table:
         ax.table(table, colLabels = titles, rowLabels = [str(elem) for elem in dimensions[:dim + 1]],
              bbox = [1,0,0.30,1])
-    fig.savefig(name, facecolor = 'white')
+    fig.savefig(name, facecolor = 'white', bbox_inches='tight')
 
 
 def compare_graphs_percent(dictionary_list, n_instances, name,
