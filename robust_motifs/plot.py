@@ -60,7 +60,7 @@ def plot_simplex_counts(dictionary_list, dim, dim_annot, titles, name):
 
 def plot_biedge_counts(dictionary_list, dim, dim_annot, titles, name, plot_table = True,
                        ylabel = "Bidirectional edges",
-                       title = None):
+                       figtitle = None):
     dictionary_value_list = [list(dictionary.values()) for dictionary in dictionary_list]
     colormap = cm.get_cmap('Set1')
     dimensions = list(dictionary_list[0].keys())
@@ -78,8 +78,8 @@ def plot_biedge_counts(dictionary_list, dim, dim_annot, titles, name, plot_table
     ax.legend(loc = 'upper left')
     ax.set_xlabel("Dimension")
     ax.set_ylabel(ylabel)
-    if title:
-        ax.set_title(title)
+    if figtitle:
+        ax.set_title(figtitle)
     if plot_table:
         ax.table(table, colLabels = titles, rowLabels = [str(elem) for elem in dimensions[:dim + 1]],
              bbox = [1,0,0.30,1])
@@ -88,7 +88,7 @@ def plot_biedge_counts(dictionary_list, dim, dim_annot, titles, name, plot_table
 
 def plot_biedge_cumulative(dictionary_list, dim, dim_annot, titles, name, plot_table = True,
                            ylabel = "Bidirectional edges cumulative",
-                           title = None):
+                           figtitle = None):
     dictionary_value_list = [list(dictionary.values()) for dictionary in dictionary_list]
     colormap = cm.get_cmap('Set1')
     dimensions = list(dictionary_list[0].keys())
@@ -107,8 +107,8 @@ def plot_biedge_cumulative(dictionary_list, dim, dim_annot, titles, name, plot_t
     ax.legend()
     ax.set_xlabel("Dimension")
     ax.set_ylabel(ylabel)
-    if title:
-        ax.set_title(title)
+    if figtitle:
+        ax.set_title(figtitle)
     if plot_table:
         ax.table(table, colLabels = titles, rowLabels = [str(elem) for elem in dimensions[:dim + 1]],
              bbox = [1,0,0.30,1])
