@@ -24,6 +24,7 @@ def compare_graphs(dictionary_list, n_instances, name,
         fig, axs = plt.subplots(1,len(elem)+1, figsize = [30,10])
         simplices = [m[0,-1] for m in elem]
         axs[0].bar(range(len(elem)),simplices)
+        axs[0].set_xticks(range(len(title_list) - 1))
         axs[0].set_xticklabels(title_list[1:])
         plt.setp(axs[0].get_xticklabels(), rotation=45, ha="right",
                  rotation_mode="anchor")
@@ -125,6 +126,7 @@ def compare_graphs_percent(dictionary_list, n_instances, name,
         fig, axs = plt.subplots(1, len(elem) + 1, figsize=[30, 10])
         simplices = [m[0, -1] for m in elem]
         axs[0].bar(range(len(elem)), simplices)
+        axs[0].set_xticks(range(len(title_list) - 1))
         axs[0].set_xticklabels(title_list[1:])
         plt.setp(axs[0].get_xticklabels(), rotation=45, ha="right",
                  rotation_mode="anchor")
@@ -152,6 +154,7 @@ def compare_graphs_normalized(dictionary_list, n_instances, name,
         fig, axs = plt.subplots(1, len(elem) + 1, figsize=[30, 10])
         simplices = [m[0, -1] for m in elem]
         axs[0].bar(range(len(elem)), simplices)
+        axs[0].set_xticks(range(len(title_list)-1))
         axs[0].set_xticklabels(title_list[1:])
         plt.setp(axs[0].get_xticklabels(), rotation=45, ha="right",
                  rotation_mode="anchor")
@@ -177,6 +180,7 @@ def compare_graphs_diff(dictionary_list, n_instances, name,
         fig, axs = plt.subplots(2, len(elem), figsize=[30, 21])
         simplices = [m[0, -1] for m in elem]
         axs[0][0].bar(range(len(elem)), simplices)
+        axs[0][0].set_xticks(range(len(title_list)-1))
         axs[0][0].set_xticklabels(title_list[1:])
         plt.setp(axs[0][0].get_xticklabels(), rotation=45, ha="right",
                  rotation_mode="anchor")
@@ -226,6 +230,7 @@ def compare_graphs_diff_normalized(dictionary_list, n_instances, name,
         elem = [matrix/matrix[0][-1] if matrix[0][-1] else matrix for matrix in elem]
         fig, axs = plt.subplots(2, len(elem), figsize=[30, 21])
         axs[0][0].bar(range(len(elem)), simplices)
+        axs[0][0].set_xticks(range(len(title_list)-1))
         axs[0][0].set_xticklabels(title_list[1:])
         plt.setp(axs[0][0].get_xticklabels(), rotation=45, ha="right",
                  rotation_mode="anchor")
@@ -277,6 +282,7 @@ def compare_graphs_diff_percent(dictionary_list, n_instances, name,
         fig, axs = plt.subplots(2, len(elem), figsize=[30, 21])
 
         axs[0][0].bar(range(len(elem)), simplices)
+        axs[0][0].set_xticks(range(len(title_list)-1))
         axs[0][0].set_xticklabels(title_list[1:])
         plt.setp(axs[0][0].get_xticklabels(), rotation=45, ha="right",
                  rotation_mode="anchor")
