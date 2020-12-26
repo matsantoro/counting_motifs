@@ -63,7 +63,7 @@ for dimension in range(1,7):
 
     fig = plt.figure(figsize = [13, 7])
     ax = fig.add_subplot()
-    ax.bar(range(len(morphs)), np.sum(esdf, axis = 1), tick_label = morphs)
+    ax.bar(range(len(morphs)), np.sum(edgedf, axis = 1), tick_label = morphs)
     ax.set_title("Bidirectional edge count per mtype on dim " + str(dimension +1))
     fig.savefig("BEmtypehistD" + str(dimension+1), facecolor = "white")
 
