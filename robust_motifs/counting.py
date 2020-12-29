@@ -664,7 +664,7 @@ def correlations_maximal_simplex(file_list, gids, gid_start, gid_end, corr_matri
     for matrix_file in f1:
         maximal_matrix = load_sparse_matrix_from_pkl(matrix_file)
         bidirectional_connections = maximal_matrix.multiply(bmatrix)
-        bidirectional_connections = bidirectional_connections.sum(bidirectional_connections.T)
+        bidirectional_connections += bidirectional_connections.T
         bmatrix -= bidirectional_connections
         bconn_matrices.append(sp.triu(bidirectional_connections))
         directional_connections = maximal_matrix.multiply(dmatrix)
