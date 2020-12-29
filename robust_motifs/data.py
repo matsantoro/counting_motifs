@@ -269,6 +269,7 @@ def create_maximal_simplex_file(simplex_file_path, maximal_file_path, overwrite)
         simplices2 = cfile['Cells_' + (str(i + 2))][:]
         new_simplices = find_maximal_simplices_from_all(simplices1, simplices2)
         maximal_cfile.create_dataset('Cells_' + (str(i + 1)), data=new_simplices)
+    maximal_cfile.create_dataset('Cells_' + str(i+2), data=cfile[list(cfile.keys())[-1]][:])
 
 
 def flagser_count(in_path: Path, out_path: Path, overwrite: bool = True, maximal = False):
