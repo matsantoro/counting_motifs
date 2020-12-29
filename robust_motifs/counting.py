@@ -652,32 +652,47 @@ def maximal_matrices_from_file(path: Path):
                                               shape = matrix.shape)
                                   )
 
-def correlations_maximal_simplex(file_list, gids, gid_start, gid_end, corr_matrix):
-    for i, (current, next) in enumerate(zip(file_list[:-1], file_list[1:])):
-        current_matrix = load_sparse_matrix_from_pkl(current)
-        next_matrix = load_sparse_matrix_from_pkl(next)
-        connections = current_matrix - next_matrix
-        bidirectional_edges = connections.multiply(connections.T)
-        directed_edges = connections - bidirectional_edges
-        bidirectional_edges = bidirectional_edges.tocoo()
-        directed_edges = directed_edges.tocoo()
+def correlations_maximal_simplex(file_list, gids, gid_start, gid_end, corr_matrix, conn_matrix, name):
+    bmatrix = conn_matrix.multiply(conn_matrix.T)
+    dmatrix = conn_matrix - bmatrix
+    matrix = conn_matrix
+    bconn_matrices = []
+    dconn_matrices = []
+    conn_matrices = []
+    for matrix_file in file_list.reverse():
+        maximal_matrix = load_sparse_matrix_from_pkl(matrix_file)
+        bidirectional_connections = maximal_matrix.multiply(bmatrix)
+        bidirectional_connections = bidirectional_connections.sum(bidirectional_connections.T)
+        bmatrix -= bidirectional_connections
+        bconn_matrices.append(sp.triu(bidirectional_connections))
+        directional_connections = maximal_matrix.multiply(dmatrix)
+        dmatrix -= directional_connections
+        dconn_matrices.append(directional_connections)
+        all_connections = maximal_matrix.multiply(matrix)
+        matrix -= all_connections
+        conn_matrices.append(all_connections)
+
+    for i in range(len(file_list)):
+        directed_edges = dconn_matrices[i].tocoo()
+        bidirectional_edges = bconn_matrices[i].tocoo()
+        edges = conn_matrices[i]
         gids = gids - gid_start
         posarray = np.empty((gid_end-gid_start,))
         posarray[:] = np.nan
-        for i, element in enumerate(gids):
-            posarray[element] = i
+        for j, element in enumerate(gids):
+            posarray[element] = j
         directed_corr_list = []
         for row, col in zip(directed_edges.row, directed_edges.col):
             if np.isnan(posarray[row]) or np.isnan(posarray[col]):
                 pass
             else:
-                directed_corr_list.append([corr_matrix[posarray[row]][posarray[col]], i+1])
+                directed_corr_list.append([corr_matrix[int(posarray[row])][int(posarray[col])], i+2, name])
         bid_corr_list = []
         for row, col in zip(bidirectional_edges.row, bidirectional_edges.col):
             if np.isnan(posarray[row]) or np.isnan(posarray[col]):
                 pass
             else:
-                bid_corr_list.append([corr_matrix[posarray[row]][posarray[col]], i + 1])
+                bid_corr_list.append([corr_matrix[int(posarray[row])][int(posarray[col])], i + 2, name])
         yield (directed_corr_list, bid_corr_list)
 
 
