@@ -653,6 +653,7 @@ def maximal_matrices_from_file(path: Path):
                                   )
 
 def correlations_maximal_simplex(file_list, gids, gid_start, gid_end, corr_matrix, conn_matrix, name):
+    gids = gids - gid_start
     bmatrix = conn_matrix.multiply(conn_matrix.T)
     dmatrix = conn_matrix - bmatrix
     matrix = conn_matrix
@@ -678,7 +679,6 @@ def correlations_maximal_simplex(file_list, gids, gid_start, gid_end, corr_matri
         directed_edges = dconn_matrices[i].tocoo()
         bidirectional_edges = bconn_matrices[i].tocoo()
         edges = conn_matrices[i]
-        gids = gids - gid_start
         posarray = np.empty((gid_end-gid_start,))
         posarray[:] = np.nan
         for j, element in enumerate(gids):
