@@ -659,7 +659,9 @@ def correlations_maximal_simplex(file_list, gids, gid_start, gid_end, corr_matri
     bconn_matrices = []
     dconn_matrices = []
     conn_matrices = []
-    for matrix_file in file_list.reverse():
+    f1 = file_list
+    f1.reverse()
+    for matrix_file in f1:
         maximal_matrix = load_sparse_matrix_from_pkl(matrix_file)
         bidirectional_connections = maximal_matrix.multiply(bmatrix)
         bidirectional_connections = bidirectional_connections.sum(bidirectional_connections.T)
