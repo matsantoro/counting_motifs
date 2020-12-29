@@ -651,3 +651,33 @@ def maximal_matrices_from_file(path: Path):
                                   sp.csr_matrix((np.ones((edges.shape[0],), dtype = bool), (edges[:,0],edges[:,1])),
                                               shape = matrix.shape)
                                   )
+
+def correlations_maximal_simplex(file_list, gids, gid_start, gid_end, corr_matrix):
+    for i, (current, next) in enumerate(zip(file_list[:-1], file_list[1:])):
+        current_matrix = load_sparse_matrix_from_pkl(current)
+        next_matrix = load_sparse_matrix_from_pkl(next)
+        connections = current_matrix - next_matrix
+        bidirectional_edges = connections.multiply(connections.T)
+        directed_edges = connections - bidirectional_edges
+        bidirectional_edges = bidirectional_edges.tocoo()
+        directed_edges = directed_edges.tocoo()
+        gids = gids - gid_start
+        posarray = np.empty((gid_end-gid_start,))
+        posarray[:] = np.nan
+        for i, element in enumerate(gids):
+            posarray[element] = i
+        directed_corr_list = []
+        for row, col in zip(directed_edges.row, directed_edges.col):
+            if np.isnan(posarray[row]) or np.isnan(posarray[col]):
+                pass
+            else:
+                directed_corr_list.append([corr_matrix[posarray[row]][posarray[col]], i+1])
+        bid_corr_list = []
+        for row, col in zip(bidirectional_edges.row, bidirectional_edges.col):
+            if np.isnan(posarray[row]) or np.isnan(posarray[col]):
+                pass
+            else:
+                bid_corr_list.append([corr_matrix[posarray[row]][posarray[col]], i + 1])
+        yield (directed_corr_list, bid_corr_list)
+
+
