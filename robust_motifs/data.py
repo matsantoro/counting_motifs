@@ -217,7 +217,7 @@ def save_count_graph_from_matrix(path: Path, matrix: sp.csr_matrix, verbose: boo
     return path, pickle_path, count_path
 
 
-def load_sparse_matrix_from_pkl(path: Path):
+def load_sparse_matrix_from_pkl(path: Path, shape = None):
     """Loads a sparse matrix from a pickle file.
 
     :argument path: (Path) path of the pickle file to be loaded.
@@ -225,10 +225,15 @@ def load_sparse_matrix_from_pkl(path: Path):
     :returns matrix: (sp.csr_matrix) Loaded sparse matrix."""
     with open(path, 'rb') as file:
         dictionary = pickle.load(file)
-        return sp.csr_matrix((dictionary['data'],
+        if not shape:
+            return sp.csr_matrix((dictionary['data'],
                              dictionary['indices'],
                              dictionary['indptr']))
-
+        else:
+            return sp.csr_matrix((dictionary['data'],
+                                  dictionary['indices'],
+                                  dictionary['indptr']),
+                                 shape = shape)
 
 def save_sparse_matrix_to_pkl(path: Path, matrix: sp.csr_matrix):
     """Saves a sparse matrix to a pickle file.
