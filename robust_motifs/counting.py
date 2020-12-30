@@ -631,7 +631,7 @@ def bcount_from_file(path: Path, dimension: int):
 def maximal_matrices_from_file(path: Path):
     matrix = load_sparse_matrix_from_pkl(path)
     mcount_file = h5py.File(path.with_name(path.stem + "-count-maximal.h5"))
-    for i in range(1,len(mcount_file.keys())+1):
+    for i in range(0,len(mcount_file.keys())+1):
         simplices = np.array(mcount_file['Cells_' + str(i+1)])
         edges = np.unique(np.vstack(
                     [np.unique(simplices[:, x], axis = 0) for x in
