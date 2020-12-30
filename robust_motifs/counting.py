@@ -662,6 +662,7 @@ def correlations_maximal_simplex(file_list, gids, gid_start, gid_end, corr_matri
     conn_matrices = []
     f1 = file_list
     f1.reverse()
+    check_matrix = sp.csr_matrix(np.zeros(matrix.shape, dtype = bool))
     for matrix_file in f1:
         maximal_matrix = load_sparse_matrix_from_pkl(matrix_file)
         bidirectional_connections = maximal_matrix.multiply(bmatrix)
@@ -674,6 +675,8 @@ def correlations_maximal_simplex(file_list, gids, gid_start, gid_end, corr_matri
         all_connections = maximal_matrix.multiply(matrix)
         matrix -= all_connections
         conn_matrices.append(all_connections)
+        check_matrix+=(bidirectional_connections+directional_connections)
+    assert check_matrix == conn_matrix
 
     for i in range(len(file_list)):
         directed_edges = dconn_matrices[i].tocoo()
