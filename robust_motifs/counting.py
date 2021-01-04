@@ -628,6 +628,7 @@ def bcount_from_file(path: Path, dimension: int):
     with open(path.with_name("bcounts.pkl"), 'wb') as file:
         pickle.dump(counts_per_dimension, file)
 
+
 def maximal_matrices_from_file(path: Path):
     matrix = load_sparse_matrix_from_pkl(path)
     mcount_file = h5py.File(path.with_name(path.stem + "-count-maximal.h5"))
@@ -651,6 +652,7 @@ def maximal_matrices_from_file(path: Path):
                                   sp.csr_matrix((np.ones((edges.shape[0],), dtype = bool), (edges[:,0],edges[:,1])),
                                               shape = matrix.shape)
                                   )
+
 
 def correlations_maximal_simplex(file_list, gids, gid_start, gid_end, corr_matrix, conn_matrix, name):
     gids = gids - gid_start
@@ -701,3 +703,45 @@ def correlations_maximal_simplex(file_list, gids, gid_start, gid_end, corr_matri
         yield (directed_corr_list, bid_corr_list)
 
 
+def correlations_simplexwise(maximal_count_path, gids, gid_start, gid_end, corr_matrix, conn_matrix, type):
+    mcount_file = h5py.File(maximal_count_path)
+    dvalues = []
+    bvalues = []
+    dvariances = []
+    bvariances = []
+    values = []
+    variances = []
+    for i in range(0, len(mcount_file.keys())):
+        dimension = i+1
+        simplices = np.array(mcount_file['Cells_' + str(i + 1)])
+        if type == 'end':
+            edges = simplices[:, [-2, -1]]
+        elif type == 'spine':
+            edges = np.vstack([simplices[:, [x, x + 1]] for x in range(simplices.shape[1] - 1)])
+        posarray = np.empty((gid_end - gid_start,))
+        posarray[:] = np.nan
+        for j, element in enumerate(gids):
+            posarray[element] = j
+
+        dcorrelations = np.empty((edges.shape[0],))
+        dcorrelations[:] = np.nan
+        bcorrelations = np.empty((edges.shape[0],))
+        bcorrelations[:] = np.nan
+        correlations = np.empty((edges.shape[0],))
+        correlations[:] = np.nan
+        for j, (row, col) in enumerate(edges):
+            if np.isnan(posarray[row]) or np.isnan(posarray[col]):
+                value = 0
+            else:
+                value = corr_matrix[int(posarray[row])][int(posarray[col])]
+            if conn_matrix[col, row]:
+                bcorrelations[j] = value
+            else:
+                dcorrelations[j] = value
+            correlations[j] = value
+        bvalues.append(np.nanmean(bcorrelations))
+        bvariances.append(np.nanvar(bcorrelations))
+        dvalues.append(np.nanmean(dcorrelations))
+        dvariances.append(np.nanvar(dcorrelations))
+        values.append(np.nanmean(correlations))
+        variances.append(np.nanvar(correlations))
