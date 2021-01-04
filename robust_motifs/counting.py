@@ -746,6 +746,6 @@ def correlations_simplexwise(maximal_count_path, gids, gid_start, gid_end, corr_
         values.append(np.nanmean(correlations))
         variances.append(np.nanvar(correlations))
 
-        return ((bvalues, bvariances),
-                (dvalues, dvariances),
-                (values, variances))
+    return ((bvalues, bvariances),
+            (dvalues, dvariances),
+            (values, variances))
