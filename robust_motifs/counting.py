@@ -711,7 +711,7 @@ def correlations_simplexwise(maximal_count_path, gids, gid_start, gid_end, corr_
     bvariances = []
     values = []
     variances = []
-    for i in range(0, len(mcount_file.keys())):
+    for i in tqdm(range(0, len(mcount_file.keys()))):
         dimension = i+1
         simplices = np.array(mcount_file['Cells_' + str(i + 1)])
         if type == 'end':
