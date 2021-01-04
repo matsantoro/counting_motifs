@@ -720,7 +720,7 @@ def correlations_simplexwise(maximal_count_path, gids, gid_start, gid_end, corr_
             edges = np.vstack([simplices[:, [x, x + 1]] for x in range(simplices.shape[1] - 1)])
         posarray = np.empty((gid_end - gid_start,))
         posarray[:] = np.nan
-        for j, element in enumerate(gids - gid_start):
+        for j, element in enumerate(gids - gid_start + 1):
             posarray[element] = j
 
         dcorrelations = np.empty((edges.shape[0],))
