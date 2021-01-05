@@ -718,6 +718,11 @@ def correlations_simplexwise(maximal_count_path, gids, gid_start, gid_end, corr_
             edges = simplices[:, [-2, -1]]
         elif type == 'spine':
             edges = np.vstack([simplices[:, [x, x + 1]] for x in range(simplices.shape[1] - 1)])
+        elif type == 'all':
+            edges = np.vstack(
+                        [simplices[:, x] for x in
+                            combinations(range(simplices.shape[1]), 2)]
+            )
         posarray = np.empty((gid_end - gid_start + 1,))
         posarray[:] = np.nan
         for j, element in enumerate(gids - gid_start):
