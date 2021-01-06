@@ -711,6 +711,9 @@ def correlations_simplexwise(maximal_count_path, gids, gid_start, gid_end, corr_
     bvariances = []
     values = []
     variances = []
+    btot = []
+    dtot = []
+    tot = []
     for i in tqdm(range(0, len(mcount_file.keys()))):
         dimension = i+1
         simplices = np.array(mcount_file['Cells_' + str(i + 1)])
@@ -746,11 +749,14 @@ def correlations_simplexwise(maximal_count_path, gids, gid_start, gid_end, corr_
             correlations[j] = value
         bvalues.append(np.nanmean(bcorrelations))
         bvariances.append(np.nanvar(bcorrelations))
+        btot.append(np.sum(np.logical_not(np.isnan(bcorrelations))))
         dvalues.append(np.nanmean(dcorrelations))
         dvariances.append(np.nanvar(dcorrelations))
+        dtot.append(np.sum(np.logical_not(np.isnan(dcorrelations))))
         values.append(np.nanmean(correlations))
         variances.append(np.nanvar(correlations))
+        tot.append(np.sum(np.logical_not(np.isnan(bcorrelations))))
 
-    return ((bvalues, bvariances),
-            (dvalues, dvariances),
-            (values, variances))
+    return ((bvalues, bvariances, btot),
+            (dvalues, dvariances, dtot),
+            (values, variances, tot))
