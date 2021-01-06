@@ -737,9 +737,11 @@ def correlations_simplexwise(maximal_count_path, gids, gid_start, gid_end, corr_
         bcorrelations[:] = np.nan
         correlations = np.empty((edges.shape[0],))
         correlations[:] = np.nan
+        extra_count = 0
         for j, (row, col) in enumerate(edges):
             if np.isnan(posarray[row]) or np.isnan(posarray[col]):
                 value = 0
+                extra_count += 1
             else:
                 value = corr_matrix[int(posarray[row])][int(posarray[col])]
             if conn_matrix[col, row]:
@@ -759,4 +761,5 @@ def correlations_simplexwise(maximal_count_path, gids, gid_start, gid_end, corr_
 
     return ((bvalues, bvariances, btot),
             (dvalues, dvariances, dtot),
-            (values, variances, tot))
+            (values, variances, tot),
+            extra_count)
