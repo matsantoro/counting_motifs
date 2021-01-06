@@ -757,7 +757,7 @@ def correlations_simplexwise(maximal_count_path, gids, gid_start, gid_end, corr_
         dtot.append(np.sum(np.logical_not(np.isnan(dcorrelations))))
         values.append(np.nanmean(correlations))
         variances.append(np.nanvar(correlations))
-        tot.append(np.sum(np.logical_not(np.isnan(bcorrelations))))
+        tot.append(len(correlations))
 
     return ((bvalues, bvariances, btot),
             (dvalues, dvariances, dtot),
