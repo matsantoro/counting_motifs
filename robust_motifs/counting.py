@@ -719,8 +719,8 @@ def correlations_simplexwise(maximal_count_path, gids, gid_start, gid_end, corr_
         dimension = i+1
         simplices = np.array(mcount_file['Cells_' + str(i + 1)])
         if bs:
-            bisimplices = simplices[conn_matrix[simplices[-1], simplices[-2]]]
-            simplices = bisimplices[bisimplices]
+            bisimplices = simplices[conn_matrix[simplices[:,-1], simplices[:,-2]], :]
+            simplices = bisimplices
         if type == 'end':
             edges = simplices[:, [-2, -1]]
         elif type == 'spine':
