@@ -763,3 +763,69 @@ def correlations_simplexwise(maximal_count_path, gids, gid_start, gid_end, corr_
             (dvalues, dvariances, dtot),
             (values, variances, tot),
             extra_count)
+
+
+def correlations_bisimplexwise(maximal_count_path, gids, gid_start, gid_end, corr_matrix, conn_matrix, type,
+                               bs=False):
+    mcount_file = h5py.File(maximal_count_path)
+    dvalues = []
+    bvalues = []
+    dvariances = []
+    bvariances = []
+    values = []
+    variances = []
+    btot = []
+    dtot = []
+    tot = []
+    for i in tqdm(range(0, len(mcount_file.keys()))):
+        dimension = i+1
+        simplices = np.array(mcount_file['Cells_' + str(i + 1)])
+        if bs:
+            bisimplices = simplices[conn_matrix[simplices[-1], simplices[-2]]]
+            simplices = bisimplices
+        if type == 'end':
+            edges = simplices[:, [-2, -1]]
+        elif type == 'spine':
+            edges = np.vstack([simplices[:, [x, x + 1]] for x in range(simplices.shape[1] - 1)])
+        elif type == 'all':
+            edges = np.vstack(
+                        [simplices[:, x] for x in
+                            combinations(range(simplices.shape[1]), 2)]
+            )
+        posarray = np.empty((gid_end - gid_start + 1,))
+        posarray[:] = np.nan
+        for j, element in enumerate(gids - gid_start):
+            posarray[element] = j
+
+        dcorrelations = np.empty((edges.shape[0],))
+        dcorrelations[:] = np.nan
+        bcorrelations = np.empty((edges.shape[0],))
+        bcorrelations[:] = np.nan
+        correlations = np.empty((edges.shape[0],))
+        correlations[:] = np.nan
+        extra_count = 0
+        for j, (row, col) in enumerate(edges):
+            if np.isnan(posarray[row]) or np.isnan(posarray[col]):
+                value = 0
+                extra_count += 1
+            else:
+                value = corr_matrix[int(posarray[row])][int(posarray[col])]
+            if conn_matrix[col, row]:
+                bcorrelations[j] = value
+            else:
+                dcorrelations[j] = value
+            correlations[j] = value
+        bvalues.append(np.nanmean(bcorrelations))
+        bvariances.append(np.nanvar(bcorrelations))
+        btot.append(np.sum(np.logical_not(np.isnan(bcorrelations))))
+        dvalues.append(np.nanmean(dcorrelations))
+        dvariances.append(np.nanvar(dcorrelations))
+        dtot.append(np.sum(np.logical_not(np.isnan(dcorrelations))))
+        values.append(np.nanmean(correlations))
+        variances.append(np.nanvar(correlations))
+        tot.append(len(correlations))
+
+    return ((bvalues, bvariances, btot),
+            (dvalues, dvariances, dtot),
+            (values, variances, tot),
+            extra_count)
