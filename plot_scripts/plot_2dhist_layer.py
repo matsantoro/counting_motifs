@@ -41,14 +41,14 @@ for dimension in range(1,7):
     fig = plt.figure(figsize = [7, 7])
     ax = fig.add_subplot()
     sns.heatmap(np.divide(bsdf,edgedf), xticklabels = morphs, yticklabels = morphs,cmap= 'viridis')
-    ax.set_title("Bisimplex count over bidirectional edge count per layer on dim "+ str(dimension + 1))
+    ax.set_title("Normalized bisimplex count per layer on dim "+ str(dimension + 1))
     ax.set_xticklabels(ax.get_xticklabels(), rotation = 45, ha = 'right')
     fig.savefig("BSBElayer2dhistD" + str(dimension+1), facecolor = "white")
 
     fig = plt.figure(figsize = [7, 7])
     ax = fig.add_subplot()
     sns.heatmap(np.divide(esdf,edgedf), xticklabels = morphs, yticklabels = morphs,cmap= 'viridis')
-    ax.set_title("E. simplex count over bidirectional edge count per layer on dim "+ str(dimension + 1))
+    ax.set_title("Normalized extended simplex count per layer on dim "+ str(dimension + 1))
     ax.set_xticklabels(ax.get_xticklabels(), rotation = 45, ha = 'right')
     fig.savefig("ESBElayer2dhistD" + str(dimension+1), facecolor = "white")
 
@@ -87,19 +87,19 @@ for dimension in range(1,7):
     fig = plt.figure(figsize = [8, 6])
     ax = fig.add_subplot() # end
     ax.bar(range(len(morphs)), np.divide(np.sum(bsdf, axis = 0), np.sum(edgedf, axis = 0)), tick_label = morphs)
-    ax.set_title("Bisimplex sink over bidegree counts per layer on dim " + str(dimension +1))
+    ax.set_title("Normalized bisimplex sink counts per layer on dim " + str(dimension +1))
     fig.savefig("BSsinkBElayerhistD" + str(dimension+1), facecolor = "white")
 
     fig = plt.figure(figsize = [8, 6])
     ax = fig.add_subplot() # end
     ax.bar(range(len(morphs)), np.divide(np.sum(esdf, axis = 1), np.sum(edgedf, axis = 0)), tick_label = morphs)
-    ax.set_title("Extended simplex sink over bidegree counts per layer on dim " + str(dimension +1))
+    ax.set_title("Normalized extended simplex sink counts per layer on dim " + str(dimension +1))
     fig.savefig("ESsinkBElayerhistD" + str(dimension+1), facecolor = "white")
 
     fig = plt.figure(figsize = [8, 6])
     ax = fig.add_subplot() # end
     ax.bar(range(len(morphs)), np.divide(np.sum(esdf, axis = 0), np.sum(edgedf, axis = 0)), tick_label = morphs)
-    ax.set_title("Extended simplex end over bidegree counts per layer on dim " + str(dimension +1))
+    ax.set_title("Normalized extended simplex end counts per layer on dim " + str(dimension +1))
     fig.savefig("ESendBElayerhistD" + str(dimension+1), facecolor = "white")
 
 
