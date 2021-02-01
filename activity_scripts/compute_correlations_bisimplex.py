@@ -11,5 +11,5 @@ for trace in Path("data/activity/spikes/evoked").glob("*"):
     gids = pickle.load(open(trace/"gids.pkl",'rb'))
     corr_matrix = pickle.load(open(trace/"pearson_correlation.pkl",'rb'))
     a = correlations_simplexwise(data/ "cons_locs_pathways_mc2_Column/cons_locs_pathways_mc2_Column-count-maximal.h5",
-                             gids, 62693, 94038, corr_matrix, matrix, "all", bs = True)
-    pickle.dump(a, open(trace / "bisimplexwise_pc_all.pkl", "wb"))
+                             gids, 62693, 94038, corr_matrix, matrix, "spine", bs = True)
+    pickle.dump(a, open(trace / "bisimplexwise_pc_spine.pkl", "wb"))
