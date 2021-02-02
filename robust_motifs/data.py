@@ -13,6 +13,7 @@ import scipy.sparse as sp
 from .custom_mp import prepare_shared_memory, share_dense_matrix
 from .utilities import build_triu_matrix
 
+
 def import_connectivity_matrix(path: Path = Path('data/test/cons_locs_pathways_mc0_Column.h5'),
                         zones: Optional[List[str]] = None,
                         dataframe: bool = True,
@@ -251,11 +252,17 @@ def save_sparse_matrix_to_pkl(path: Path, matrix: sp.csr_matrix):
 
 
 def unique_identifier(mat):
+    """
+    Function to find unique bit identifier of items. Courtesy of Daniela Egas Santander.
+    """
     dt = np.dtype([('raw', np.void, mat.shape[1] * mat.dtype.itemsize)])
     return mat.reshape(np.prod(mat.shape)).view(dt)
 
 
 def find_maximal_simplices_from_all(simplices, simplices_higher_dim):
+    """
+    Function to retrieve maximal simplices. Courtesy of Daniela Egas Santander.
+    """
     one_index = unique_identifier(simplices)
     simplices_higher_dim_stacked = unique_identifier(np.vstack(
         [simplices_higher_dim[:, np.delete(np.arange(simplices_higher_dim.shape[1]), x)] for x in
@@ -263,7 +270,14 @@ def find_maximal_simplices_from_all(simplices, simplices_higher_dim):
     return simplices[np.logical_not(np.isin(one_index, simplices_higher_dim_stacked)), :]
 
 
-def create_maximal_simplex_file(simplex_file_path, maximal_file_path, overwrite):
+def create_maximal_simplex_file(simplex_file_path: Path, maximal_file_path: Path, overwrite: bool):
+    """Generate h5py file containing maximal simplices.
+
+    :argument simplex_file_path: (Path) path of h5 file containing simplices from which to extract
+        maximal ones.
+    :argument maximal_file_path: (Path) output h5 file path.
+    :argument overwrite: (bool) whether to overwrite existing files.
+    """
     cfile = h5py.File(simplex_file_path)
 
     if overwrite:
@@ -435,6 +449,7 @@ class MPDataManager:
         self._shut_shared_memory()
 
     def _shut_shared_memory(self):
+        """Shuts down shared memory to prevent memory issues."""
         try:
             for link in self._full_matrix_link + self._bid_matrix_link:
                 link.unlink()
@@ -458,6 +473,11 @@ class MPDataManager:
             pass
         
     def _prepare_random_selection(self, n_simplices: int, dimension: int):
+        """Prepares random selection of simplices. For testing purposes.
+
+        :argument n_simplices: (int) number of simplices to select.
+        :argument dimension: (int) dimension to consider.
+        """
         self._random_selection = np.random.choice(self._count_file["Cells_" + str(dimension)].shape[0],
                                             min(
                                                 n_simplices,
@@ -547,63 +567,24 @@ class MPDataManager:
                 part=slice(i*chunk_dimension, (i+1)*chunk_dimension)
             )
 
-    def worker_init_dense(self):
-        def initializer():
-            print("Initializing on PID " + str(os.getppid()))
-            global global_bid_matrix
-            global_bid_matrix = self._bid_matrix.todense().copy()
-            global global_matrix
-            global_matrix = self._matrix.todense().copy()
-
-        return initializer
-
-    def worker_init_sparse(self):
-        def initializer():
-            print("Initializing on PID " + str(os.getppid()))
-            global global_bid_matrix
-            global_bid_matrix = self._bid_matrix.copy()
-            global global_matrix
-            global_matrix = self._matrix.copy()
-
-        return initializer
-
-    def mp_np_clean_simplex_iterator(self, n: Optional[int] = None, dimension: int = 1, random: bool = False,
-                                     part: slice = None):
-        if random:
-            self._prepare_random_selection(n, dimension)
-            simplex_iterator = np.array(self._count_file['Cells_' + str(dimension)][self._random_selection])
-        else:
-            if n:
-                simplex_iterator = np.array(self._count_file['Cells_' + str(dimension)][:n])
-            elif part:
-                simplex_iterator = np.array(self._count_file['Cells_' + str(dimension)])[part]
-            else:
-                simplex_iterator = np.array(self._count_file['Cells_' + str(dimension)])
-
-        return simplex_iterator
-
-    def mp_clean_chunks(self, dimension: int = 1, chunk_dimension: int = 10000000):
-        """Iterator over big chunks for memory issues.
-
-        :argument dimension: (int) dimension of simplices to load.
-        :argument chunk_dimension: (int) number of simplices to load at once.
-
-        :returns iterator: (iterable) returns simplex iterators of specified dimension."""
-        total_length = self._count_file['Cells_'+str(dimension)].shape[0]
-        for i in range(np.ceil(total_length/chunk_dimension).astype(int)):
-            yield self.mp_np_clean_simplex_iterator(
-                dimension=dimension,
-                part=slice(i*chunk_dimension, (i+1)*chunk_dimension)
-            )
-
 
 class Pickleizer:
+    """
+    Class that takes the connectivity matrices in h5 format and turns them into pickle.
+
+    :argument in_path: (Path) path of the connectivity matrices.
+    """
     def __init__(self, in_path: Path):
         self.in_path = in_path
         self.file_list = list(self.in_path.glob("**/*Column.h5"))
         print("Found " + str(len(self.file_list)) + " files.")
 
     def pickle_it(self, destination: Path = None):
+        """
+        Turns the h5 files into pickles.
+
+        :argument destination: (Path) destination of pickleization.
+        """
         if destination is None:
             for file_path in self.file_list:
                 m = import_connectivity_matrix(file_path, dataframe=False, type='csr')
@@ -616,6 +597,14 @@ class Pickleizer:
 
 
 def create_test_graphs(n_instances: int, n_nodes: int, density: float, path: Path):
+    """Function to create test ER. For testing purposes.
+
+    :argument n_instances: (int) number of test instances.
+    :argument n_nodes: (int) number of nodes of the instances.
+    :argument density: (float) edge density of the instances.
+    :argument path: (Path) where to save the instances.
+        Instances are saved in /seed_i folders.
+    """
     for i in tqdm(range(n_instances)):
         save_path = path / ("seed_" + str(i))
         save_path.mkdir(exist_ok=True, parents=True)
@@ -628,6 +617,20 @@ def create_test_graphs(n_instances: int, n_nodes: int, density: float, path: Pat
 
 def create_control_graphs_from_matrix(n_instances: int, matrix_path: Path, path: Path, type: str, seed: int = 1,
                                       maximal=True):
+    """
+    Generates control graphs from the connectivity matrices.
+
+    :argument n_instances: (int) number of graph instances to generate.
+    :argument matrix_path: (Path) path to the connectivity matrix.
+    :argument path: (Path) outpath of the instance files.
+    :argument type: (str) type of the model. Allowed types:
+        'full' (ER),
+        'pathways' (pathway SBM),
+        'adjusted' (adjusted ER),
+        'shuffled_biedges' (bishuffled),
+        'underlying' (underlying)
+    :argument seed: (int) random seed.
+    """
     np.random.seed(seed)
     if type == 'full':
         for n in tqdm(range(n_instances)):
@@ -684,6 +687,11 @@ def create_control_graphs_from_matrix(n_instances: int, matrix_path: Path, path:
 
 
 class ResultManager:
+    """
+    Class to manage finding algorithm results.
+
+    :argument path: (Path) path where to find the ES_count.npz files.
+    """
     def __init__(self, path: Path):
         self.processed_file_list = []
         for file in sorted(path.glob("**/ES_count.npz")):
@@ -699,6 +707,13 @@ class ResultManager:
         return es_counts, bs_counts
 
     def get_counts_dataframe(self, group: str):
+        """
+        Get a dataframe with results arranged for plotting from the initializer path.
+
+        :argument group: (str) name for the results considered.
+            Different names give rise to different lines in the plots.
+
+        """
         a = []
         for file in self.processed_file_list:
             try:
@@ -738,14 +753,37 @@ class ResultManager:
         return pd.DataFrame(a, columns=["count", "dim", "group", "motif", "filename"])
 
     def get_ES_count(self, file: Path, dimension: int):
+        """
+        Get the ES count in a dimension.
+
+        :argument file: (Path) file to get the ES count from.
+        :argument dimension: (int) dimension to consider.
+
+        :returns (extras, indices): (Tuple[np.ndarray, np.ndarray])
+            pair of arrays containing the indices of neurons and the simplex pointers.
+            extras[indices[i]:indices[i+1]] contains the neurons that turn simplex i into an extended simplex.
+        """
         p1 = file / ("ES_D" + str(dimension) + ".npz")
         return np.load(p1)['arr_0'], np.load(p1.with_name(p1.stem + "indptr.npz"))['arr_0']
 
     def get_BS_count(self, file: Path, dimension: int):
+        """
+            Get the BS count in a dimension.
+
+            :argument file: (Path) file to get the ES count from.
+            :argument dimension: (int) dimension to consider.
+
+            :returns (extras, indices): (Tuple[np.ndarray, np.ndarray])
+                pair of arrays containing the indices of neurons and the simplex pointers.
+                extras[indices[i]:indices[i+1]] contains the neurons that turn simplex i into a bisimplex.
+        """
         p1 = file / ("BS_D" + str(dimension) + ".npz")
         return np.load(p1)['arr_0'], np.load(p1.with_name(p1.stem + "indptr.npz"))['arr_0']
 
     def get_vertex_es_count(self, file: Path, dimension: int):
+        """
+        Gets the extended simplex count of vertices.
+        """
         p1 = file / ("ES_D" + str(dimension) + "indptr.npz")
         ends = np.load(p1)['arr_0']
 
@@ -771,6 +809,9 @@ class ResultManager:
         return vertex_es_count
 
     def get_vertex_bs_count(self, file: Path, dimension: int):
+        """
+            Gets the bisimplex count of vertices.
+        """
         p1 = file / ("BS_D" + str(dimension) + "indptr.npz")
         ends = np.load(p1)['arr_0']
 
@@ -796,6 +837,11 @@ class ResultManager:
         return vertex_bs_count
 
     def get_file_matrix(self, file: Path):
+        """
+        Small wrapper to load files dealing with different notations.
+
+        :argument file: (Path) path to the connectivity graph folder.
+        """
 
         try:
             matrix_path = file / (file.parts[-1] + ".pkl")
@@ -807,166 +853,21 @@ class ResultManager:
 
         return m
 
-    def get_matrix_properties(self, original_file_path, processed_h5_path, dimension):
-        matrix = import_connectivity_matrix(original_file_path, dataframe=True)
-        m = import_connectivity_matrix(original_file_path, dataframe = False, type = 'csr')
-        complex_file_path = processed_h5_path
-        complex_file = h5py.File(complex_file_path)
+    def get_morph_counts(self, original_file_path: Path, processed_h5_path: Path,
+                         dimension: int):
+        """
+        Gets the morphology counts of simplex sink for motifs.
 
+        :argument original_file_path: (Path) path to the connectivity original h5 file.
+        :argument processed_h5_path: (Path) path to the flagser output file.
+        :argument dimension: (int) dimension of the simplex.
 
-        zones_array = np.array([elem[0] for elem in matrix.index.values])
-
-        pbs = processed_h5_path.parent / ("BS_D" + str(dimension) + "indptr.npz")
-        pes = processed_h5_path.parent / ("ES_D" + str(dimension) + "indptr.npz")
-        bspointers = np.load(pbs)['arr_0']
-        espointers = np.load(pes)['arr_0']
-        pbs = processed_h5_path.parent / ("BS_D" + str(dimension) + ".npz")
-        pes = processed_h5_path.parent / ("ES_D" + str(dimension) + ".npz")
-        bsends = np.load(pbs)['arr_0']
-        esends = np.load(pes)['arr_0']
-
-        bspairlist = []
-        espairlist = []
-        simplex_list = np.array(complex_file['Cells_' + str(dimension)])
-        for i, simplex in tqdm(enumerate(simplex_list)):
-            for element in bsends[bspointers[i]:bspointers[i+1]]:
-                bspairlist.append([
-                    zones_array[simplex[-1]][3:].replace("_", ""), zones_array[element][3:].replace("_", "")
-                ])
-            for element in esends[espointers[i]:espointers[i + 1]]:
-                espairlist.append([
-                    zones_array[simplex[-1]][3:].replace("_", ""), zones_array[element][3:].replace("_", "")
-                ])
-        bsdf = pd.DataFrame(bspairlist, columns = ['mtype1', 'mtype2'])
-        esdf = pd.DataFrame(espairlist, columns = ['mtypesink', 'mtypeextra'])
-
-        return esdf, bsdf
-
-    def get_motif_GID(self, original_file_path, processed_h5_path, dimension):
-        matrix = import_connectivity_matrix(original_file_path, dataframe=True)
-        complex_file_path = processed_h5_path
-        complex_file = h5py.File(complex_file_path)
-
-        zones_array = np.array([elem[0] for elem in matrix.index.values])
-
-        pbs = processed_h5_path.parent / ("BS_D" + str(dimension) + "indptr.npz")
-        pes = processed_h5_path.parent / ("ES_D" + str(dimension) + "indptr.npz")
-        bspointers = np.load(pbs)['arr_0']
-        espointers = np.load(pes)['arr_0']
-        pbs = processed_h5_path.parent / ("BS_D" + str(dimension) + ".npz")
-        pes = processed_h5_path.parent / ("ES_D" + str(dimension) + ".npz")
-        bsends = np.load(pbs)['arr_0']
-        esends = np.load(pes)['arr_0']
-
-        bslist = []
-        eslist = []
-        simplex_list = np.array(complex_file['Cells_' + str(dimension)])
-        for i, simplex in tqdm(enumerate(simplex_list)):
-            for element in bsends[bspointers[i]:bspointers[i+1]]:
-                bslist.append(
-                    simplex[-1]
-                )
-            for element in esends[espointers[i]:espointers[i + 1]]:
-                eslist.append(
-                    simplex[-1]
-                )
-        bsdf = pd.DataFrame(bslist, columns = ['GID'])
-        esdf = pd.DataFrame(eslist, columns = ['GIDsink'])
-
-        return esdf, bsdf
-
-    def get_motif_mtype(self, original_file_path, processed_h5_path, dimension):
-        matrix = import_connectivity_matrix(original_file_path, dataframe=True)
-        complex_file_path = processed_h5_path
-        complex_file = h5py.File(complex_file_path)
-
-        zones_array = np.array([elem[0] for elem in matrix.index.values])
-
-        pbs = processed_h5_path.parent / ("BS_D" + str(dimension) + "indptr.npz")
-        pes = processed_h5_path.parent / ("ES_D" + str(dimension) + "indptr.npz")
-        bspointers = np.load(pbs)['arr_0']
-        espointers = np.load(pes)['arr_0']
-        pbs = processed_h5_path.parent / ("BS_D" + str(dimension) + ".npz")
-        pes = processed_h5_path.parent / ("ES_D" + str(dimension) + ".npz")
-        bsends = np.load(pbs)['arr_0']
-        esends = np.load(pes)['arr_0']
-
-        bslist = []
-        eslist = []
-        simplex_list = np.array(complex_file['Cells_' + str(dimension)])
-        for i, simplex in tqdm(enumerate(simplex_list)):
-            zone = zones_array[simplex[-1]][3:].replace("_", "")
-            for element in bsends[bspointers[i]:bspointers[i+1]]:
-                bslist.append(
-                    zone
-                )
-            for element in esends[espointers[i]:espointers[i + 1]]:
-                eslist.append(
-                    zone
-                )
-        bsdf = pd.DataFrame(bslist, columns = ['mtype'])
-        esdf = pd.DataFrame(eslist, columns = ['mtypesink'])
-
-        return esdf, bsdf
-
-    def get_motif_mtype(self, original_file_path, processed_h5_path, dimension):
-        matrix = import_connectivity_matrix(original_file_path, dataframe=True)
-        complex_file_path = processed_h5_path
-        complex_file = h5py.File(complex_file_path)
-
-        zones_array = np.array([elem[0] for elem in matrix.index.values])
-
-        pbs = processed_h5_path.parent / ("BS_D" + str(dimension) + "indptr.npz")
-        pes = processed_h5_path.parent / ("ES_D" + str(dimension) + "indptr.npz")
-        bspointers = np.load(pbs)['arr_0']
-        espointers = np.load(pes)['arr_0']
-        pbs = processed_h5_path.parent / ("BS_D" + str(dimension) + ".npz")
-        pes = processed_h5_path.parent / ("ES_D" + str(dimension) + ".npz")
-        bsends = np.load(pbs)['arr_0']
-        esends = np.load(pes)['arr_0']
-
-        bslist = []
-        eslist = []
-        simplex_list = np.array(complex_file['Cells_' + str(dimension)])
-        for i, simplex in tqdm(enumerate(simplex_list)):
-            zone = zones_array[simplex[-1]][:2]
-            for element in bsends[bspointers[i]:bspointers[i+1]]:
-                bslist.append(
-                    zone
-                )
-            for element in esends[espointers[i]:espointers[i + 1]]:
-                eslist.append(
-                    zone
-                )
-        bsdf = pd.DataFrame(bslist, columns = ['layer'])
-        esdf = pd.DataFrame(eslist, columns = ['layersink'])
-
-        return esdf, bsdf
-
-    def get_GID_counts(self, original_file_path, processed_h5_path, dimension):
-        matrix = import_connectivity_matrix(original_file_path, dataframe=True)
-        complex_file_path = processed_h5_path
-        complex_file = h5py.File(complex_file_path)
-
-        zones_array = np.array([elem[0] for elem in matrix.index.values])
-
-        pbs = processed_h5_path.parent / ("BS_D" + str(dimension) + "indptr.npz")
-        pes = processed_h5_path.parent / ("ES_D" + str(dimension) + "indptr.npz")
-        bspointers = np.load(pbs)['arr_0']
-        espointers = np.load(pes)['arr_0']
-        pbs = processed_h5_path.parent / ("BS_D" + str(dimension) + ".npz")
-        pes = processed_h5_path.parent / ("ES_D" + str(dimension) + ".npz")
-        bsends = np.load(pbs)['arr_0']
-        esends = np.load(pes)['arr_0']
-        bs_count = np.zeros((matrix.shape[0],))
-        es_count = np.zeros((matrix.shape[0],))
-        simplex_list = np.array(complex_file['Cells_' + str(dimension)])
-        for i, simplex in tqdm(enumerate(simplex_list)):
-            bs_count[simplex[-1]] += bspointers[i+1]-bspointers[i]
-            es_count[simplex[-1]] += espointers[i+1]-espointers[i]
-        return es_count, bs_count
-
-    def get_morph_counts(self, original_file_path, processed_h5_path, dimension):
+        :returns (es_morph_counts, bs_morph_counts, morph_list):
+            (Tuple[np.array, np.array, List[str]]) tuple containing:
+            - list of e. simplex counts per morphology
+            - list of bisimplex counts per morphology
+            - list of considered morphologies
+        """
         matrix = import_connectivity_matrix(original_file_path, dataframe=True)
         complex_file_path = processed_h5_path
         complex_file = h5py.File(complex_file_path)
@@ -999,6 +900,19 @@ class ResultManager:
         return es_morph_counts, bs_morph_counts, morph_list
 
     def get_layer_counts(self, original_file_path, processed_h5_path, dimension):
+        """
+            Gets the morphology counts of simplex sink for motifs.
+
+            :argument original_file_path: (Path) path to the connectivity original h5 file.
+            :argument processed_h5_path: (Path) path to the flagser output file.
+            :argument dimension: (int) dimension of the simplex.
+
+            :returns (es_layer_counts, bs_layer_counts, layer_list):
+                (Tuple[np.array, np.array, List[str]]) tuple containing:
+                - list of e. simplex counts per layer
+                - list of bisimplex counts per layer
+                - list of considered layers
+        """
         matrix = import_connectivity_matrix(original_file_path, dataframe=True)
         complex_file_path = processed_h5_path
         complex_file = h5py.File(complex_file_path)
@@ -1031,6 +945,22 @@ class ResultManager:
         return es_morph_counts, bs_morph_counts, morph_list
 
     def get_2d_es_layer_hist_count(self, original_file_path, processed_h5_path, dimension):
+        """
+            Gets the layer counts of simplex sink / extra neuron for extended simplices
+            and bisimplices.
+
+            :argument original_file_path: (Path) path to the connectivity original h5 file.
+            :argument processed_h5_path: (Path) path to the flagser output file.
+            :argument dimension: (int) dimension of the simplex.
+
+            :returns es_layer_matrix, bs_layer_matrix, biedge_layer_matrix, layer_list:
+                Tuple[np.ndarray, np.ndarray, np.ndarray, list]
+                A tuple containing the results of the count. contains:
+                - 2d layer counts for extended simplices
+                - 2d layer counts for bisimplices
+                - 2d layer counts for bidirectional edges
+                - list of layers
+        """
         matrix = import_connectivity_matrix(original_file_path, dataframe=True)
         msparse = import_connectivity_matrix(original_file_path, dataframe=False, type='csr')
         complex_file_path = processed_h5_path
@@ -1075,6 +1005,22 @@ class ResultManager:
         return es_morph_matrix, bs_morph_matrix, biedge_morph_matrix, morph_list
 
     def get_2d_es_morph_hist_count(self, original_file_path, processed_h5_path, dimension):
+        """
+            Gets the morphology counts of simplex sink / extra neuron for extended simplices
+            and bisimplices.
+
+            :argument original_file_path: (Path) path to the connectivity original h5 file.
+            :argument processed_h5_path: (Path) path to the flagser output file.
+            :argument dimension: (int) dimension of the simplex.
+
+            :returns es_morph_matrix, bs_morph_matrix, biedge_morph_matrix, morph_list:
+                Tuple[np.ndarray, np.ndarray, np.ndarray, list]
+                A tuple containing the results of the count. contains:
+                - 2d morphology counts for extended simplices
+                - 2d morphology counts for bisimplices
+                - 2d morphology counts for bidirectional edges
+                - list of morphologies
+        """
         matrix = import_connectivity_matrix(original_file_path, dataframe=True)
         msparse = import_connectivity_matrix(original_file_path, dataframe=False, type = 'csr')
         complex_file_path = processed_h5_path
@@ -1268,6 +1214,12 @@ def create_digraphs(dimension: int, n_edges: int, instances: int, extra_edges: i
 
 
 class BcountResultManager:
+    """
+    Class to manage finding algorithm results. Mimics a ResultManager, but is only used in retrieving
+        simplex/bisimplex/extended simplex counts when bisimplex counts are not present.
+
+    :argument path: (Path) path where to find the ES_count.npz files.
+    """
     def __init__(self, path: Path):
         self.processed_file_list = []
         for file in sorted(path.glob("**/ES_count.npz")):
