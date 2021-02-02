@@ -4,25 +4,14 @@ from itertools import combinations
 import multiprocessing as mp
 from multiprocessing.shared_memory import SharedMemory
 import numpy as np
-import os
 from pathlib import Path
 import pickle
 import psutil
 import scipy.sparse as sp
 from tqdm import tqdm
-from typing import Any, Dict, List, Tuple
+from typing import Dict, List, Tuple
 
-from .data import MPDataManager, load_sparse_matrix_from_pkl, save_sparse_matrix_to_pkl
-
-
-def worker_initializer(path):
-    print("Initializing on PID" + str(os.getpid()))
-    global global_matrix
-    global global_bid_matrix
-    global_matrix = load_sparse_matrix_from_pkl(path)
-    global_bid_matrix = global_matrix.multiply(global_matrix.T)
-    global_matrix = global_matrix.todense()
-    global_bid_matrix = global_bid_matrix.todense()
+from .data import MPDataManager, load_sparse_matrix_from_pkl
 
 
 def get_bidirectional_targets(data: Tuple[List, Dict]):
@@ -52,24 +41,6 @@ def get_bidirectional_targets(data: Tuple[List, Dict]):
                          buffer=sm_indptr.buf)
     matrix = sp.csr_matrix((sdata, sindices, sindptr))
     return matrix[element].multiply(matrix.T[element]).nonzero()[1]
-
-
-def retrieve_sparse_shared_matrix(matrix_info: Dict[str, Any]):
-    # Doesn't seem to work because pickling or pass by reference?
-    # I reduced to rewriting this thing in each function.
-    sm_data = SharedMemory(name=matrix_info['data']['name'])
-    sm_indices = SharedMemory(name=matrix_info['indices']['name'])
-    sm_indptr = SharedMemory(name=matrix_info['indptr']['name'])
-    sdata = np.ndarray((int(matrix_info['data']['size'] / matrix_info['data']['factor']),),
-                       dtype=matrix_info['data']['type'],
-                       buffer=sm_data.buf)
-    sindices = np.ndarray((int(matrix_info['indices']['size'] / matrix_info['indices']['factor']),),
-                          dtype=matrix_info['indices']['type'],
-                          buffer=sm_indices.buf)
-    sindptr = np.ndarray((int(matrix_info['indptr']['size'] / matrix_info['indptr']['factor']),),
-                         dtype=matrix_info['indptr']['type'],
-                         buffer=sm_indptr.buf)
-    return sp.csr_matrix((sdata, sindices, sindptr))
 
 
 def get_n_extended_simplices(mp_element: Tuple[List, Dict, Dict]) -> int:
@@ -102,8 +73,6 @@ def get_n_extended_simplices(mp_element: Tuple[List, Dict, Dict]) -> int:
                          dtype=full_matrix_info['indptr']['type'],
                          buffer=sm_indptr.buf)
 
-    # TODO : implement 1-matrix version
-    full_matrix = sp.csr_matrix((sdata, sindices, sindptr))
 
     # Retrieve second matrix location:
     sm_data = SharedMemory(name=bidirectional_matrix_info['data']['name'])
@@ -254,14 +223,7 @@ def get_n_extended_simplices_dense(mp_element: Tuple[List, Dict, Dict]) -> int:
         :returns es_count: (int) Number of extended simplices containing this simplex.
     """
     simplex = mp_element[0]
-    # full_matrix_info = mp_element[1]
     bidirectional_matrix_info = mp_element[2]
-
-    # Retrieve first matrix location:
-    # Actually causes loss of performance!
-    # full_memory_block = SharedMemory(name=full_matrix_info['name'], size=full_matrix_info['size'])
-    # full_matrix = np.ndarray(shape=full_matrix_info['shape'], dtype=full_matrix_info['type'], buffer=full_memory_block.buf)
-
 
     # Retrieve second matrix location:
     bid_memory_block = SharedMemory(name=bidirectional_matrix_info['name'], size=bidirectional_matrix_info['size'])
@@ -282,8 +244,7 @@ def get_bisimplices_dense(mp_element: Tuple[List, Dict, Dict]) -> np.ndarray:
             The third element of the tuple contains a dictionary that specifies the
             shared memory location and info of the bidirectional targets matrix
 
-        :returns bisimplices: List[Tuple[int]] List of bisimplices indices in tuple form, with
-            the extra 2-clique as an ordered pair (for duplicate checking).
+        :returns bisimplices: (np.ndarray) array of extra nodes that turn the simplex into a bisimplex.
     """
     simplex = mp_element[0]
     full_matrix_info = mp_element[1]
@@ -311,8 +272,9 @@ def get_bisimplices_dense(mp_element: Tuple[List, Dict, Dict]) -> np.ndarray:
             bisimplices.append(elem)
     return np.array(bisimplices, dtype=np.int16)
 
+
 def count_bisimplices_dense(mp_element: Tuple[List, Dict, Dict]) -> List[Tuple[int]]:
-    """Function that returns the list of bisimplices of a simplex.
+    """Function that returns the counts of bisimplices of a simplex.
         :argument data: (tuple[List, Dict, Dict]) data to check retrieve the extended simplices.
             The first element of the tuple contains the indices of the neurons
             in the adjacency matrix.
@@ -321,8 +283,7 @@ def count_bisimplices_dense(mp_element: Tuple[List, Dict, Dict]) -> List[Tuple[i
             The third element of the tuple contains a dictionary that specifies the
             shared memory location and info of the bidirectional targets matrix
 
-        :returns bisimplices: List[Tuple[int]] List of bisimplices indices in tuple form, with
-            the extra 2-clique as an ordered pair (for duplicate checking).
+        :returns bisimplex_count: (int) number of bisimplices present
     """
     simplex = mp_element[0]
     full_matrix_info = mp_element[1]
@@ -351,37 +312,6 @@ def count_bisimplices_dense(mp_element: Tuple[List, Dict, Dict]) -> List[Tuple[i
     return count
 
 
-def get_n_extended_simplices_new(mp_element: Tuple[List, Dict, Dict]) -> int:
-    """Function that returns the number of extended simplices of a simplex.
-        :argument data: (tuple[List, Dict, Dict]) data to check retrieve the extended simplices.
-            The first element of the tuple contains the indices of the neurons
-            in the adjacency matrix.
-            The second element of the tuple contains a dictionary that specifies
-            the shared memory location and info of the full matrix.
-            The third element of the tuple contains a dictionary that specifies the
-            shared memory location and info of the bidirectional targets matrix
-
-        :returns es_count: (int) Number of extended simplices containing this simplex.
-    """
-    simplex = mp_element[0]
-    bidirectional_matrix_info = mp_element[2]
-
-    # Retrieve second matrix location:
-    sm_indices = SharedMemory(name=bidirectional_matrix_info['indices']['name'])
-    sm_indptr = SharedMemory(name=bidirectional_matrix_info['indptr']['name'])
-
-    sindices = np.ndarray((int(bidirectional_matrix_info['indices']['size'] / bidirectional_matrix_info['indices']['factor']),),
-                          dtype=bidirectional_matrix_info['indices']['type'],
-                          buffer=sm_indices.buf)
-    sindptr = np.ndarray((int(bidirectional_matrix_info['indptr']['size'] / bidirectional_matrix_info['indptr']['factor']),),
-                         dtype=bidirectional_matrix_info['indptr']['type'],
-                         buffer=sm_indptr.buf)
-
-
-    # Actual computation:
-    return len(set(sindices[sindptr[simplex[-1]]:sindptr[simplex[-1]+1]]) - set(simplex[:-1]))
-
-
 def get_extended_simplices_dense(mp_element: Tuple[List, Dict, Dict]) -> np.ndarray:
     """Function that returns the list of extended simplices of a simplex.
         :argument data: (tuple[List, Dict, Dict]) data to check retrieve the extended simplices.
@@ -392,17 +322,11 @@ def get_extended_simplices_dense(mp_element: Tuple[List, Dict, Dict]) -> np.ndar
             The third element of the tuple contains a dictionary that specifies the
             shared memory location and info of the bidirectional targets matrix
 
-        :returns es_count: (int) Number of extended simplices containing this simplex.
+        :returns ess: (np.ndarray) Extended simplices containing the original simplex.
     """
     simplex = mp_element[0]
     # full_matrix_info = mp_element[1]
     bidirectional_matrix_info = mp_element[2]
-
-    # Retrieve first matrix location:
-    # Actually causes loss of performance!
-    # full_memory_block = SharedMemory(name=full_matrix_info['name'], size=full_matrix_info['size'])
-    # full_matrix = np.ndarray(shape=full_matrix_info['shape'], dtype=full_matrix_info['type'], buffer=full_memory_block.buf)
-
 
     # Retrieve second matrix location:
     bid_memory_block = SharedMemory(name=bidirectional_matrix_info['name'], size=bidirectional_matrix_info['size'])
@@ -413,60 +337,11 @@ def get_extended_simplices_dense(mp_element: Tuple[List, Dict, Dict]) -> np.ndar
     return np.array(list(set(bid_matrix[simplex[-1]].nonzero()[0]) - set(simplex[:-1])))
 
 
-def get_bisimplices_clean(mp_element: List) -> np.ndarray:
-    """Function that returns the list of bisimplices of a simplex.
-        :argument data: (tuple[List, Dict, Dict]) data to check retrieve the extended simplices.
-            The first element of the tuple contains the indices of the neurons
-            in the adjacency matrix.
-            The second element of the tuple contains a dictionary that specifies
-            the shared memory location and info of the full matrix.
-            The third element of the tuple contains a dictionary that specifies the
-            shared memory location and info of the bidirectional targets matrix
-
-        :returns bisimplices: List[Tuple[int]] List of bisimplices indices in tuple form, with
-            the extra 2-clique as an ordered pair (for duplicate checking).
-    """
-
-    global global_bid_matrix
-    global global_matrix
-
-    simplex = mp_element
-
-    bisimplices = []
-    for elem in (set(global_bid_matrix[simplex[-1]].nonzero()[0]).difference(set(simplex[:-1]))):
-        f = True
-        signature = global_matrix[simplex[:-1]].T[elem].T
-        for flag in signature:
-            if not flag:
-                f = False
-                break
-        if f:
-            bisimplices.append(elem)
-    return np.array(bisimplices, dtype=np.int16)
-
-
-def get_extended_simplices_clean(mp_element: List) -> np.ndarray:
-    """Function that returns the list of extended simplices of a simplex.
-        :argument data: (tuple[List, Dict, Dict]) data to check retrieve the extended simplices.
-            The first element of the tuple contains the indices of the neurons
-            in the adjacency matrix.
-            The second element of the tuple contains a dictionary that specifies
-            the shared memory location and info of the full matrix.
-            The third element of the tuple contains a dictionary that specifies the
-            shared memory location and info of the bidirectional targets matrix
-
-        :returns es_count: (int) Number of extended simplices containing this simplex.
-    """
-    simplex = mp_element
-    global global_bid_matrix
-    # Actual computation:
-    return np.array(list(set(global_bid_matrix[simplex[-1]].nonzero()[0]) - set(simplex[:-1])))
-
-
 class Processor:
     """Class to manage pipeline execution on files in a path.
 
-    :argument in_path: (Path) path to execute pipeline on.
+    :argument in_path: (Path) path to execute pipeline on. Files that end with .pkl are considered to be
+        the adjacency matrices of the things to count. Automatically discards bcounts.pkl files
     """
     def __init__(self, in_path: Path):
         self.in_path = in_path
@@ -606,7 +481,16 @@ class Processor:
                     pass
 
 
-def count_bidirectional_edges(matrix: np.ndarray, count_file: h5py.File, dimension: int):
+def count_bidirectional_edges(matrix: np.ndarray, count_file: h5py.File, dimension: int) -> Dict[int, np.ndarray]:
+    """Function that returns bidirectional edge counts in simplices per dimension.
+
+    :argument matrix: (np.ndarray) connectivity matrix of graph.
+    :argument count_file: (h5py.File) the flagser output file.
+    :argument dimension: (int) maximum dimension to consider
+
+    :returns count_dictionary: (Dict[int, np.ndarray]) dictionary containing
+        the bidirectional edge counts in simplices per dimension
+    """
     counts_per_dimension = {}
     for i in range(1, dimension + 1):
         counts_per_dimension.update({i: np.zeros((i + 1, i + 1))})
@@ -621,6 +505,13 @@ def count_bidirectional_edges(matrix: np.ndarray, count_file: h5py.File, dimensi
 
 
 def bcount_from_file(path: Path, dimension: int):
+    """
+    Function that generates bidirectional edge count files from a pickle/flagser output
+        combination.
+
+    :argument path: (Path) path to the .pkl file containing the sparse matrix
+    :argument dimension: (int) maximum dimension to consider.
+    """
     matrix = load_sparse_matrix_from_pkl(path)
     matrix = np.array(matrix.todense())
     count_file = h5py.File(path.with_name(path.stem + "-count.h5"))
@@ -629,82 +520,22 @@ def bcount_from_file(path: Path, dimension: int):
         pickle.dump(counts_per_dimension, file)
 
 
-def maximal_matrices_from_file(path: Path):
-    matrix = load_sparse_matrix_from_pkl(path)
-    mcount_file = h5py.File(path.with_name(path.stem + "-count-maximal.h5"))
-    for i in range(0,len(mcount_file.keys())):
-        simplices = np.array(mcount_file['Cells_' + str(i+1)])
-        edges = np.unique(np.vstack(
-                    [np.unique(simplices[:, x], axis = 0) for x in
-                     combinations(range(simplices.shape[1]),2)]
-                ), axis = 0)
-        save_sparse_matrix_to_pkl(path.with_name(f'maximal_dim{i + 1}_any.pkl'),
-                                sp.csr_matrix((np.ones((edges.shape[0],), dtype = bool), (edges[:,0],edges[:,1])),
-                                              shape = matrix.shape)
-                                  )
-        edges = np.unique(np.vstack([simplices[:, [x, x+1]] for x in range(simplices.shape[1]-1)]), axis = 0)
-        save_sparse_matrix_to_pkl(path.with_name(f'maximal_dim{i + 1}_spine.pkl'),
-                                  sp.csr_matrix((np.ones((edges.shape[0],), dtype = bool), (edges[:,0],edges[:,1])),
-                                              shape = matrix.shape)
-                                  )
-        edges = np.unique(simplices[:, [-2, -1]], axis = 0)
-        save_sparse_matrix_to_pkl(path.with_name(f'maximal_dim{i + 1}_end.pkl'),
-                                  sp.csr_matrix((np.ones((edges.shape[0],), dtype = bool), (edges[:,0],edges[:,1])),
-                                              shape = matrix.shape)
-                                  )
+def correlations_simplexwise(maximal_count_path: Path, gids: np.ndarray,
+                             gid_start: int, gid_end: int, corr_matrix: np.ndarray,
+                             conn_matrix: np.ndarray, type: str,
+                               bs: bool=False):
+    """
+    Function to compute simplexwise correlation in edges. All edges in simplices are considered with repetitions.
 
-
-def correlations_maximal_simplex(file_list, gids, gid_start, gid_end, corr_matrix, conn_matrix, name):
-    gids = gids - gid_start
-    bmatrix = conn_matrix.multiply(conn_matrix.T)
-    dmatrix = conn_matrix - bmatrix
-    matrix = conn_matrix
-    bconn_matrices = []
-    dconn_matrices = []
-    conn_matrices = []
-    f1 = file_list
-    f1.reverse()
-    check_matrix = sp.csr_matrix(np.zeros(matrix.shape, dtype = bool))
-    for matrix_file in f1:
-        maximal_matrix = load_sparse_matrix_from_pkl(matrix_file, (31346, 31346))
-        bidirectional_connections = maximal_matrix.multiply(bmatrix)
-        bidirectional_connections += bidirectional_connections.T
-        bmatrix -= bidirectional_connections
-        bconn_matrices.append(sp.triu(bidirectional_connections))
-        directional_connections = maximal_matrix.multiply(dmatrix)
-        dmatrix -= directional_connections
-        dconn_matrices.append(directional_connections)
-        all_connections = maximal_matrix.multiply(matrix)
-        matrix -= all_connections
-        conn_matrices.append(all_connections)
-        check_matrix+=(bidirectional_connections+directional_connections)
-    assert check_matrix == conn_matrix
-
-    for i in range(len(file_list)):
-        directed_edges = dconn_matrices[i].tocoo()
-        bidirectional_edges = bconn_matrices[i].tocoo()
-        edges = conn_matrices[i]
-        posarray = np.empty((gid_end-gid_start,))
-        posarray[:] = np.nan
-        for j, element in enumerate(gids):
-            posarray[element] = j
-        directed_corr_list = []
-        for row, col in zip(directed_edges.row, directed_edges.col):
-            if np.isnan(posarray[row]) or np.isnan(posarray[col]):
-                pass
-            else:
-                directed_corr_list.append([corr_matrix[int(posarray[row])][int(posarray[col])], i+2, name])
-        bid_corr_list = []
-        for row, col in zip(bidirectional_edges.row, bidirectional_edges.col):
-            if np.isnan(posarray[row]) or np.isnan(posarray[col]):
-                pass
-            else:
-                bid_corr_list.append([corr_matrix[int(posarray[row])][int(posarray[col])], i + 2, name])
-        yield (directed_corr_list, bid_corr_list)
-
-
-def correlations_simplexwise(maximal_count_path, gids, gid_start, gid_end, corr_matrix, conn_matrix, type,
-                               bs=False):
+    :argument maximal_count_path: (Path) path to h5 file with maximal simplices only.
+    :argument gids: (np.ndarray) array containing the gids of the neurons in the correlation matrix.
+    :argument gid_start: (int) first GID.
+    :argument gid_end: (int) last GID.
+    :argument corr_matrix: (np.ndarray) matrix of correlations to consider.
+    :argument conn_matrix: (np.ndarray) connectivity matrix of the graph.
+    :argument type: (str) type of edges to consider. Either 'all', 'spine', or 'end'.
+    :argument bs: (bool) whether to do the analysis in bisimplices instead of simplices.
+    """
     mcount_file = h5py.File(maximal_count_path)
     dvalues = []
     bvalues = []
