@@ -60,9 +60,3 @@ def share_dense_matrix(matrix: np.ndarray) -> Tuple[Dict, List]:
                 'shape': matrix.shape
             }
     return array, [memory_block]
-
-
-# This doesn't work. Just call the same exact stuff on main.
-def load_dense_matrix(array):
-    memory_block = SharedMemory(name=array['name'], size=array['size'])
-    return np.ndarray(shape=array['shape'], dtype=array['type'], buffer=memory_block.buf)
