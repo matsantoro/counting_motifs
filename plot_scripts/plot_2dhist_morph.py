@@ -3,7 +3,8 @@ from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-import pandas as pd
+
+# plot the 2d histogram of morphology of the column.
 
 p = Path("data/ready/average/cons_locs_pathways_mc2_Column")
 p1 = Path("data/original/average/cons_locs_pathways_mc2_Column.h5")

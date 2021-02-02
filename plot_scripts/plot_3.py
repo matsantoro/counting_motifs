@@ -6,6 +6,9 @@ import h5py
 import numpy as np
 import pandas as pd
 
+# Scatterplot of simplex sink bidegree/ indegree / outdegree and number of
+# extended simplices originating from the simplex.
+
 r = ResultManager(Path("data/ready/average"))
 
 for dimension in range(1,7):

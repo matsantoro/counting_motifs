@@ -3,6 +3,8 @@ from pathlib import Path
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+# Ratio of motifs/simplices. This has a 1-dimension shift. See plot_2b.
+
 r_average = ResultManager(Path("data/ready/average"))
 r_shuffled = ResultManager(Path("data/ready/controls/shuffled"))
 r_pathways = ResultManager(Path("data/ready/controls/pathway"))

@@ -5,6 +5,8 @@ import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
 
+# Plot bidegree distribution of last control models.
+
 p_average = Path("data/ready/average/cons_locs_pathways_mc0_Column")
 p_adjusted = Path("data/bcounts/bshuffled_1/seed_0")
 p_pathways = Path("data/bcounts/underlying_1/seed_0")

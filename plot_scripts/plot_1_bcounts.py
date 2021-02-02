@@ -3,6 +3,8 @@ from pathlib import Path
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+# Plot of simplices, extended smplices per dimension with new models
+
 r_average = ResultManager(Path("data/ready/average"))
 r_shuffled = ResultManager(Path("data/ready/controls/shuffled"))
 r_pathways = ResultManager(Path("data/ready/controls/pathway"))

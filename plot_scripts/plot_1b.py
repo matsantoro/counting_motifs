@@ -3,6 +3,8 @@ from pathlib import Path
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+# Plots of motif counts where individual lines are plotted instead of CIs.
+
 r_average = ResultManager(Path("data/ready/average"))
 r_shuffled = ResultManager(Path("data/ready/controls/shuffled"))
 r_pathways = ResultManager(Path("data/ready/controls_1/pathway"))

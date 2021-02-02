@@ -3,6 +3,8 @@ from pathlib import Path
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+# Plots absolute motif count for individual rats and compares to control models.
+
 r_average = ResultManager(Path("data/ready/average"))
 r = []
 for pathway in range(13,18):

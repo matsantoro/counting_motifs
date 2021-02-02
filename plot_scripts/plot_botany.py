@@ -1,9 +1,8 @@
 from robust_motifs.data import ResultManager
 from pathlib import Path
-import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
-import pandas as pd
+
+# plot 1d morphology histograms of ES/BS sink.
 
 p = Path("data/ready/average/cons_locs_pathways_mc2_Column")
 p1 = Path("data/original/average/cons_locs_pathways_mc2_Column.h5")

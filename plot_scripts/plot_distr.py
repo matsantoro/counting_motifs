@@ -5,6 +5,9 @@ import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
 
+# Plot bidegree distributions of control models.
+# This script was modified to plot indegree and outdegree distributions.
+
 p_average = Path("data/ready/average/cons_locs_pathways_mc0_Column")
 p_adjusted = Path("data/ready/controls_1/adjusted/seed_0")
 p_pathways = Path("data/ready/controls_1/pathway/seed_0")
