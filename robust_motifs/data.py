@@ -226,15 +226,23 @@ def load_sparse_matrix_from_pkl(path: Path, shape = None):
     :returns matrix: (sp.csr_matrix) Loaded sparse matrix."""
     with open(path, 'rb') as file:
         dictionary = pickle.load(file)
-        if not shape:
-            return sp.csr_matrix((dictionary['data'],
-                             dictionary['indices'],
-                             dictionary['indptr']))
-        else:
+        try:
+            pkl_shape = dictionary['shape']
             return sp.csr_matrix((dictionary['data'],
                                   dictionary['indices'],
                                   dictionary['indptr']),
-                                 shape = shape)
+                                 shape=pkl_shape)
+        except KeyError:
+            if not shape:
+                return sp.csr_matrix((dictionary['data'],
+                                    dictionary['indices'],
+                                    dictionary['indptr']))
+            else:
+                return sp.csr_matrix((dictionary['data'],
+                                      dictionary['indices'],
+                                      dictionary['indptr']),
+                                     shape=shape)
+
 
 def save_sparse_matrix_to_pkl(path: Path, matrix: sp.csr_matrix):
     """Saves a sparse matrix to a pickle file.
@@ -246,7 +254,8 @@ def save_sparse_matrix_to_pkl(path: Path, matrix: sp.csr_matrix):
         pickle.dump(
             {'data': matrix.data,
              'indices': matrix.indices,
-             'indptr': matrix.indptr},
+             'indptr': matrix.indptr,
+             'shape': matrix.shape},
             file
         )
 
