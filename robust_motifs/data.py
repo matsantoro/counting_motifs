@@ -685,7 +685,6 @@ def create_control_graphs_from_matrix(n_instances: int, matrix_path: Path, path:
             save_count_graph_from_matrix(save_path, m, maximal=maximal)
 
 
-
 class ResultManager:
     """
     Class to manage finding algorithm results.
@@ -1265,3 +1264,39 @@ class BcountResultManager:
                 a.append([elem, int(dim+1), group, "RES+", str(file)])
 
         return pd.DataFrame(a, columns=["count", "dim", "group", "motif", "filename"])
+
+
+def prepare_nemanode_data(path_to_csv: Path):
+    """ Function that prepares sparse connectivity matrix from the nemanode.org format.
+     Prepares flagser input and flagser count for further processing.
+
+    :argument path_to_csv: (Path) path to the csv file containing data in the nemanode format.
+        In this format, connections are in a csv separated by a \t with columns
+        PRE POST TYPE N_SYNAPSES
+    """
+
+    file = path_to_csv.open("r")
+    neuron_dict = {}
+    c = 0
+    columns = file.__next__().split()
+    for line in file:
+        pre, _, _, _ = line.split()
+        # Save all neurons in a dict
+        try:
+            neuron_dict[pre]
+        except KeyError:
+            neuron_dict.setdefault(line.split()[0], c)
+            c += 1
+    file.seek(0)
+    m = np.zeros(c)
+    for line in file:
+        pre, post, stype, sn = line.split()
+        if stype == "chemical":
+            m[neuron_dict[pre], neuron_dict[post]] = sn
+    # save data
+    pickle.dump(
+        sorted(list(neuron_dict.items()), key=lambda x: x[1]),
+        (path_to_csv.parent / "neurons.pkl").open("wb"))
+    return save_count_graph_from_matrix(path_to_csv.parent / "graph.pkl", sp.csr_matrix(m), maximal=True)
+
+
