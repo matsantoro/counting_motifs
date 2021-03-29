@@ -1289,15 +1289,20 @@ def prepare_nemanode_data(path_to_csv: Path):
     c = 0
     columns = file.__next__().split()
     for line in file:
-        pre, _, _, _ = line.split()
+        pre, post, _, _ = line.split()
         # Save all neurons in a dict
         try:
             neuron_dict[pre]
         except KeyError:
-            neuron_dict.setdefault(line.split()[0], c)
+            neuron_dict.setdefault(pre, c)
+            c += 1
+        try:
+            neuron_dict[post]
+        except KeyError:
+            neuron_dict.setdefault(post, c)
             c += 1
     file.seek(0)
-    m = np.zeros(c)
+    m = np.zeros((c,c))
     for line in file:
         pre, post, stype, sn = line.split()
         if stype == "chemical":
@@ -1306,6 +1311,6 @@ def prepare_nemanode_data(path_to_csv: Path):
     pickle.dump(
         sorted(list(neuron_dict.items()), key=lambda x: x[1]),
         (path_to_csv.parent / "neurons.pkl").open("wb"))
-    return save_count_graph_from_matrix(path_to_csv.parent / "graph.pkl", sp.csr_matrix(m), maximal=True)
+    return save_count_graph_from_matrix(path_to_csv.parent / "graph.flag", sp.csr_matrix(m), maximal=True)
 
 
