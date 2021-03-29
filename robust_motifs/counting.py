@@ -347,12 +347,14 @@ class Processor:
         self.in_path = in_path
         self.file_list = list(self.in_path.glob("**/*.pkl"))
         self.file_list = [elem for elem in self.file_list if not elem.name.endswith("bcounts.pkl")]
+        self.file_list = [elem for elem in self.file_list if not elem.name.endswith("neurons.pkl")]
 
     def list_extended_simplices(self):
         """Produces es files for file in path."""
         pool = mp.Pool()
         print("Found " + str(len(self.file_list)) + " .pkl files.\n")
         for elem in tqdm(self.file_list, ):
+            print("File: " + str(elem))
             with open(elem.with_name('log.txt'),'a+') as log:
                 if not elem.with_name("ES_count.npz").exists():
                     log.write(str(datetime.datetime.now()) + " Starting ES count\n")
