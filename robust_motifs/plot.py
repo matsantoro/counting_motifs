@@ -174,7 +174,6 @@ def compare_graphs_normalized(dictionary_list, n_instances, name,
 def compare_graphs_diff(dictionary_list, n_instances, name,
                               title_list = ['Simplices', 'Column', 'Adjusted ER', 'Shuffled biedges', 'Underlying']):
     dictionary_value_list = [dictionary.values() for dictionary in dictionary_list]
-    title_list = ['Simplices', 'Column', 'Adjusted ER', 'Shuffled biedges', 'Underlying']
     for i, elem in enumerate(zip(*dictionary_value_list)):
         fig, axs = plt.subplots(2, len(elem), figsize=[30, 21])
         simplices = [m[0, -1] for m in elem]
@@ -223,7 +222,6 @@ def compare_graphs_diff(dictionary_list, n_instances, name,
 def compare_graphs_diff_normalized(dictionary_list, n_instances, name,
                               title_list = ['Simplices', 'Column', 'Adjusted ER', 'Shuffled biedges', 'Underlying']):
     dictionary_value_list = [dictionary.values() for dictionary in dictionary_list]
-    title_list = ['Simplices', 'Column', 'Adjusted ER', 'Shuffled biedges', 'Underlying']
     for i, elem in enumerate(zip(*dictionary_value_list)):
         simplices = [m[0, -1] for m in elem]
         elem = [matrix/matrix[0][-1] if matrix[0][-1] else matrix for matrix in elem]
@@ -274,7 +272,6 @@ def compare_graphs_diff_normalized(dictionary_list, n_instances, name,
 def compare_graphs_diff_percent(dictionary_list, n_instances, name,
                               title_list = ['Simplices', 'Column', 'Adjusted ER', 'Shuffled biedges', 'Underlying']):
     dictionary_value_list = [dictionary.values() for dictionary in dictionary_list]
-    title_list = ['Simplices', 'Column', 'Adjusted ER', 'Shuffled biedges', 'Underlying']
     for i, elem in enumerate(zip(*dictionary_value_list)):
         simplices = [m[0, -1] for m in elem]
         elem = [matrix/np.sum(np.tril(matrix)) if matrix[0][-1] else matrix for matrix in elem]
