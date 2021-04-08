@@ -269,7 +269,7 @@ def compare_graphs_diff(dictionary_list, n_instances, name,
             matrix_min = np.min(np.tril(matrix))
             if matrix_min < vmin:
                 vmin = matrix_min
-        cap = np.max(np.abs(vmin), np.abs(vmax))
+        cap = np.max([np.abs(vmin), np.abs(vmax)])
         for matrix, ax in zip(elem[1:], axs[0][1:]):
             matrix = np.tril(matrix)
             matrix[matrix == 0] = np.nan
@@ -319,7 +319,7 @@ def compare_graphs_diff_normalized(dictionary_list, n_instances, name,
             matrix_min = np.min(np.tril(matrix))
             if matrix_min < vmin:
                 vmin = matrix_min
-        cap = np.max(np.abs(vmin), np.abs(vmax))
+        cap = np.max([np.abs(vmin), np.abs(vmax)])
         for matrix, ax in zip(elem[1:], axs[0][1:]):
             matrix = np.tril(matrix)
             matrix[matrix == 0] = np.nan
@@ -372,7 +372,7 @@ def compare_graphs_diff_percent(dictionary_list, n_instances, name,
             if matrix_min < vmin:
                 vmin = matrix_min
 
-        cap = np.max(np.abs(vmin), np.abs(vmax))
+        cap = np.max([np.abs(vmin), np.abs(vmax)])
         for matrix, ax in zip(elem[1:], axs[0][1:]):
             matrix = np.tril(matrix)
             matrix[matrix == 0] = np.nan
