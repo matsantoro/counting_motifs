@@ -187,12 +187,19 @@ def compare_graphs_percent(dictionary_list, n_instances, name,
         axs[0].set_xticklabels(title_list[1:])
         plt.setp(axs[0].get_xticklabels(), rotation=45, ha="right",
                  rotation_mode="anchor")
+        d = 0
+        for matrix in elem:
+            matrix_max = np.max(np.tril(matrix)/ np.sum(np.tril(matrix)))
+            if matrix_max > d:
+                d = matrix_max
+        if d is np.nan:
+            d = 0.12
         for matrix, ax in zip(elem, axs[1:]):
             hmap = np.tril(matrix)
             hmap[hmap == 0] = np.nan
             if np.sum(np.tril(matrix)):
                 sns.heatmap(hmap / np.sum(np.tril(matrix)) / n_instances, ax=ax, annot=True, cmap='Reds',
-                            cbar=(ax == axs[-1]), vmin=0, vmax=0.12)
+                            cbar=(ax == axs[-1]), vmin=0, vmax=d)
             else:
                 sns.heatmap(hmap / n_instances, ax=ax, annot=True, cmap='Reds',
                             cbar=(ax == axs[-1]), vmin=0, vmax=0.12)
@@ -214,10 +221,17 @@ def compare_graphs_normalized(dictionary_list, n_instances, name,
         axs[0].set_xticklabels(title_list[1:])
         plt.setp(axs[0].get_xticklabels(), rotation=45, ha="right",
                  rotation_mode="anchor")
+        d = 0
+        for matrix in elem:
+            matrix_max = np.max(np.tril(matrix) / matrix[0,-1])
+            if matrix_max > d:
+                d = matrix_max
+        if d is np.nan:
+            d = 0.2
         for matrix, ax in zip(elem, axs[1:]):
             if matrix[0][-1]:
                 sns.heatmap(np.tril(matrix) / matrix[0][-1] / n_instances, ax=ax, annot=True, cmap='Reds',
-                            cbar=(ax == axs[-1]), vmin=0, vmax=0.2)
+                            cbar=(ax == axs[-1]), vmin=0, vmax=d)
             else:
                 sns.heatmap(np.tril(matrix) / n_instances, ax=ax, annot=True, cmap='Reds',
                             cbar=(ax == axs[-1]), vmin=0, vmax=0.2)
