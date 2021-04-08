@@ -269,6 +269,7 @@ def compare_graphs_diff(dictionary_list, n_instances, name,
             matrix_min = np.min(np.tril(matrix))
             if matrix_min < vmin:
                 vmin = matrix_min
+        cap = np.max(np.abs(vmin), np.abs(vmax))
         for matrix, ax in zip(elem[1:], axs[0][1:]):
             matrix = np.tril(matrix)
             matrix[matrix == 0] = np.nan
@@ -277,8 +278,8 @@ def compare_graphs_diff(dictionary_list, n_instances, name,
         for matrix, ax in zip(diffs, axs[1][1:]):
             matrix = np.tril(matrix)
             matrix[matrix == 0] = np.nan
-            sns.heatmap(matrix / n_instances, ax=ax, annot=True, cmap='Reds',
-                        cbar=(ax == axs[1][-1]), vmin=vmin, vmax=vmax)
+            sns.heatmap(matrix / n_instances, ax=ax, annot=True, cmap='bwr',
+                        cbar=(ax == axs[1][-1]), vmin=-cap, vmax=cap)
         for title, ax in zip(title_list[2:], axs[0][1:]):
             ax.set_title(title)
         axs[0][0].set_title(title_list[0])
@@ -318,6 +319,7 @@ def compare_graphs_diff_normalized(dictionary_list, n_instances, name,
             matrix_min = np.min(np.tril(matrix))
             if matrix_min < vmin:
                 vmin = matrix_min
+        cap = np.max(np.abs(vmin), np.abs(vmax))
         for matrix, ax in zip(elem[1:], axs[0][1:]):
             matrix = np.tril(matrix)
             matrix[matrix == 0] = np.nan
@@ -326,8 +328,8 @@ def compare_graphs_diff_normalized(dictionary_list, n_instances, name,
         for matrix, ax in zip(diffs, axs[1][1:]):
             matrix = np.tril(matrix)
             matrix[matrix == 0] = np.nan
-            sns.heatmap(matrix / n_instances, ax=ax, annot=True, cmap='Reds',
-                        cbar=(ax == axs[1][-1]), vmin=vmin, vmax=vmax)
+            sns.heatmap(matrix / n_instances, ax=ax, annot=True, cmap='bwr',
+                        cbar=(ax == axs[1][-1]), vmin=-cap, vmax=cap)
         for title, ax in zip(title_list[2:], axs[0][1:]):
             ax.set_title(title)
         axs[0][0].set_title(title_list[0])
@@ -369,6 +371,8 @@ def compare_graphs_diff_percent(dictionary_list, n_instances, name,
             matrix_min = np.min(np.tril(matrix))
             if matrix_min < vmin:
                 vmin = matrix_min
+
+        cap = np.max(np.abs(vmin), np.abs(vmax))
         for matrix, ax in zip(elem[1:], axs[0][1:]):
             matrix = np.tril(matrix)
             matrix[matrix == 0] = np.nan
@@ -377,8 +381,8 @@ def compare_graphs_diff_percent(dictionary_list, n_instances, name,
         for matrix, ax in zip(diffs, axs[1][1:]):
             matrix = np.tril(matrix)
             matrix[matrix == 0] = np.nan
-            sns.heatmap(matrix / n_instances, ax=ax, annot=True, cmap='Reds',
-                        cbar=(ax == axs[1][-1]), vmin=vmin, vmax=vmax)
+            sns.heatmap(matrix / n_instances, ax=ax, annot=True, cmap='bwr',
+                        cbar=(ax == axs[1][-1]), vmin=-cap, vmax=cap)
         for title, ax in zip(title_list[2:], axs[0][1:]):
             ax.set_title(title)
         axs[0][0].set_title(title_list[0])
