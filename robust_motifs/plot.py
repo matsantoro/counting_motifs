@@ -17,6 +17,7 @@ def plot_matrices(matrices: List[np.ndarray], draw_args: Dict = {}):
         draw_networkx(graph, ax=ax, **draw_args)
     plt.show()
 
+
 def compare_graphs(dictionary_list, n_instances, name,
                    title_list = ['Simplices', 'Column', 'Adjusted ER', 'Shuffled biedges', 'Underlying']):
     dictionary_value_list = [dictionary.values() for dictionary in dictionary_list]
@@ -117,6 +118,34 @@ def plot_biedge_cumulative(dictionary_list, dim, dim_annot, titles, name, plot_t
         ax.table(table, colLabels = titles, rowLabels = [str(elem) for elem in dimensions[:dim + 1]],
              bbox = [1,0,0.30,1])
     fig.savefig(name, facecolor = 'white', bbox_inches='tight')
+
+
+def plot_bisimplex_counts(dictionary_list, dim, dim_annot, titles, name, plot_table = True,
+                       ylabel = "Bidirectional edges",
+                       figtitle = None):
+    dictionary_value_list = [list(dictionary.values()) for dictionary in dictionary_list]
+    colormap = cm.get_cmap('Set1')
+    dimensions = list(dictionary_list[0].keys())
+    fig = plt.figure(figsize=[20, 12])
+    ax = fig.add_subplot()
+    annotation_counter = 0
+    table = []
+    for elem, title in zip(dictionary_value_list, titles):
+        annotation_counter += 1
+        counts = [value[-1,-2] for value in elem[:dim + 1]]
+        ax.plot(dimensions[:dim + 1], counts, label=title, color=colormap(annotation_counter / len(titles)),
+               marker = '.', linewidth = 3)
+        table.append([f"{count:.2E}" for count in counts])
+    table = [list(elem) for elem in zip(*table)]
+    ax.legend(loc = 'upper left')
+    ax.set_xlabel("Dimension")
+    ax.set_ylabel(ylabel)
+    if figtitle:
+        ax.set_title(figtitle)
+    if plot_table:
+        ax.table(table, colLabels = titles, rowLabels = [str(elem) for elem in dimensions[:dim + 1]],
+             bbox = [1,0,0.30,1])
+    fig.savefig(name, facecolor='white', bbox_inches = 'tight')
 
 
 def compare_graphs_percent(dictionary_list, n_instances, name,
