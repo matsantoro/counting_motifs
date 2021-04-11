@@ -531,10 +531,12 @@ def bcount_from_file(path: Path, dimension: int, binary: bool = False):
     if binary:
         count_files = [p for p in path.parent.glob("*.binary")]
         counts_per_dimension = count_bidirectional_edges_from_binary(matrix, count_files)
+        name = "bbcounts.pkl"
     else:
         count_file = h5py.File(path.with_name(path.stem + "-count.h5"))
         counts_per_dimension = count_bidirectional_edges(matrix, count_file, dimension)
-    with open(path.with_name("bcounts.pkl"), 'wb') as file:
+        name = "bcounts.pkl"
+    with open(path.with_name(name), 'wb') as file:
         pickle.dump(counts_per_dimension, file)
 
 
