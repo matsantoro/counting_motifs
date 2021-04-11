@@ -527,7 +527,7 @@ def bcount_from_file(path: Path, dimension: int, binary: bool = False):
     matrix = load_sparse_matrix_from_pkl(path)
     matrix = np.array(matrix.todense())
     if binary:
-        count_files = [path.parent/p for p in path.parent.glob("*.binary")]
+        count_files = [p for p in path.parent.glob("*.binary")]
         counts_per_dimension = count_bidirectional_edges_from_binary(matrix, count_files)
     else:
         count_file = h5py.File(path.with_name(path.stem + "-count.h5"))
