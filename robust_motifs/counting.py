@@ -511,8 +511,10 @@ def count_bidirectional_edges_from_binary(matrix: np.ndarray, count_files: List[
     for file in count_files:
         simplices = binary2simplex(file)
         for simplex in tqdm(simplices):
-            counts_per_dimension[len(simplex)] = counts_per_dimension.setdefault(len(simplex))\
-                                                 + matrix[simplex].T[simplex].T
+            counts_per_dimension[len(simplex)] = counts_per_dimension.setdefault(
+                                                    len(simplex),
+                                                    np.zeros((len(simplex), len(simplex)))
+                                                ) + matrix[simplex].T[simplex].T
     return counts_per_dimension
 
 
