@@ -547,6 +547,7 @@ def binary2simplex(address: Path) -> List[List[int]]:
     S=[]                                                             #Initialise empty list for simplices
 
     i=0
+    pbar = tqdm()
     while i < len(X):
         b = format(X[i], '064b')                                     #Load the 64bit integer as a binary string
         if b[0] == '0':                                              #If the first bit is 0 this is the start of a new simplex
@@ -556,6 +557,7 @@ def binary2simplex(address: Path) -> List[List[int]]:
             if j != 2097151:                                         #If an int is 2^21 this means we have reached the end of the simplex, so don't add it
                 S[-1].append(j)
         i+=1
+        pbar.update(1)
     return S
 
 
