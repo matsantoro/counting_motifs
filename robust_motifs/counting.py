@@ -506,7 +506,17 @@ def count_bidirectional_edges(matrix: np.ndarray, count_file: h5py.File, dimensi
     return counts_per_dimension
 
 
-def bcount_from_file(path: Path, dimension: int):
+def count_bidirectional_edges_from_binary(matrix: np.ndarray, count_files: List[Path]):
+    counts_per_dimension = {}
+    for file in count_files:
+        simplices = binary2simplex(file)
+        for simplex in simplices:
+            counts_per_dimension[len(simplex)] = counts_per_dimension.setdefault(len(simplex))\
+                                                 + matrix[simplex].T[simplex].T
+    return counts_per_dimension
+
+
+def bcount_from_file(path: Path, dimension: int, binary: bool = False):
     """
     Function that generates bidirectional edge count files from a pickle/flagser output
         combination.
@@ -516,10 +526,37 @@ def bcount_from_file(path: Path, dimension: int):
     """
     matrix = load_sparse_matrix_from_pkl(path)
     matrix = np.array(matrix.todense())
-    count_file = h5py.File(path.with_name(path.stem + "-count.h5"))
-    counts_per_dimension = count_bidirectional_edges(matrix, count_file, dimension)
+    if binary:
+        count_files = [path.parent/p for p in path.parent.glob("*.binary")]
+        counts_per_dimension = count_bidirectional_edges_from_binary(matrix, count_files)
+    else:
+        count_file = h5py.File(path.with_name(path.stem + "-count.h5"))
+        counts_per_dimension = count_bidirectional_edges(matrix, count_file, dimension)
     with open(path.with_name("bcounts.pkl"), 'wb') as file:
         pickle.dump(counts_per_dimension, file)
+
+
+def binary2simplex(address: Path) -> List[List[int]]:
+    """Converts from binary format given by flagser when using --binary to a list of simplices
+    Taken from https://github.com/JasonPSmith/flagser-count/, courtesy of Jason Smith.
+
+    :argument address: (Path) path to binary file output of flagser count.
+
+    :returns S: (List(List)) list of simplices in list format."""
+    X = np.fromfile(address, dtype='uint64')                         #Load binary file
+    S=[]                                                             #Initialise empty list for simplices
+
+    i=0
+    while i < len(X):
+        b = format(X[i], '064b')                                     #Load the 64bit integer as a binary string
+        if b[0] == '0':                                              #If the first bit is 0 this is the start of a new simplex
+            S.append([])
+        t=[int(b[-21:],2), int(b[-42:-21],2), int(b[-63:-42],2)]     #Compute the 21bit ints stored in this 64bit int
+        for j in t:
+            if j != 2097151:                                         #If an int is 2^21 this means we have reached the end of the simplex, so don't add it
+                S[-1].append(j)
+        i+=1
+    return S
 
 
 def correlations_simplexwise(maximal_count_path: Path, gids: np.ndarray,
