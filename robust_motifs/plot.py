@@ -53,7 +53,7 @@ def plot_simplex_counts(dictionary_list, dim, dim_annot, titles, name):
     table = []
     for elem, title in zip(dictionary_value_list, titles):
         annotation_counter += 1
-        counts = [np.sum(np.tril(value)) for value in elem[:dim + 1]]
+        counts = [value[0,-1] for value in elem[:dim + 1]]
         ax.plot(dimensions[:dim + 1], counts, label=title, color=colormap(annotation_counter / len(titles)),
                 marker='.', linewidth=3)
         table.append([f"{count:.2E}" for count in counts])
