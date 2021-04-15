@@ -527,7 +527,7 @@ def bcount_from_file(path: Path, dimension: int, binary: bool = False):
     :argument dimension: (int) maximum dimension to consider.
     """
     matrix = load_sparse_matrix_from_pkl(path)
-    matrix = np.array(matrix.todense())
+    matrix = np.array(matrix.todense()).astype(bool)
     if binary:
         count_files = [p for p in path.parent.glob("*.binary")]
         counts_per_dimension = count_bidirectional_edges_from_binary(matrix, count_files)
