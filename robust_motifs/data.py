@@ -640,21 +640,27 @@ def create_control_graphs_from_matrix(n_instances: int, matrix_path: Path, path:
         'underlying' (underlying)
     :argument seed: (int) random seed.
     """
+    def import_matrix():
+        if matrix_path.suffix == '.h5':
+            return import_connectivity_matrix(matrix_path, dataframe=False, type='csr')
+        if matrix_path.suffix == '.pkl':
+            return load_sparse_matrix_from_pkl(matrix_path)
+
     np.random.seed(seed)
     if type == 'full':
         for n in tqdm(range(n_instances)):
-            m = import_connectivity_matrix(matrix_path, dataframe=False, type = 'csr')
+            m = import_matrix()
             m = matrix_shuffle(m, exclude_diagonal=True)
             save_path = path / ("seed_"+str(n)) / "graph.flag"
             save_count_graph_from_matrix(save_path, m, maximal=maximal)
     if type == 'pathways':
         for n in tqdm(range(n_instances)):
-            m = import_connectivity_matrix(matrix_path, dataframe=False, type='csr', pathway_shuffle=True)
+            m = import_matrix()
             save_path = path / ("seed_"+str(n)) / "graph.flag"
             save_count_graph_from_matrix(save_path, m, maximal=maximal)
     if type == 'adjusted':
         for n in tqdm(range(n_instances)):
-            m = import_connectivity_matrix(matrix_path, dataframe=False, type='csr')
+            m = import_matrix()
             bm = m.multiply(m.T)
             m = matrix_shuffle(m, exclude_diagonal=True)
             m = adjust_bidirectional_edges(m, int(bm.count_nonzero()/2))
@@ -662,7 +668,7 @@ def create_control_graphs_from_matrix(n_instances: int, matrix_path: Path, path:
             save_count_graph_from_matrix(save_path, m, maximal=maximal)
     if type == 'shuffled_biedges':
         for n in tqdm(range(n_instances)):
-            m = import_connectivity_matrix(matrix_path, dataframe=False, type='csr')
+            m = import_matrix()
             m = m.tolil()
             bm = sp.triu(m.multiply(m.T))
             n_bidirectional_edges = bm.count_nonzero()
