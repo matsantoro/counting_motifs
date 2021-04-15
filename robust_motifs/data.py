@@ -687,7 +687,7 @@ def create_control_graphs_from_matrix(n_instances: int, matrix_path: Path, path:
             save_count_graph_from_matrix(save_path, m, maximal=maximal)
     if type == 'underlying':
         for n in tqdm(range(n_instances)):
-            m = import_connectivity_matrix(matrix_path, dataframe=False, type='csr')
+            m = import_matrix()
             mdag = sp.triu(m + m.T).tolil()
             bm = sp.triu(m.multiply(m.T))
             n_bidirectional_edges = bm.count_nonzero()
