@@ -1296,22 +1296,23 @@ def prepare_nemanode_data(path_to_csv: Path):
     columns = file.__next__().split()
     for line in file:
         pre, post, _, _ = line.split()
-        # Save all neurons in a dict
-        try:
-            neuron_dict[pre]
-        except KeyError:
-            neuron_dict.setdefault(pre, c)
-            c += 1
-        try:
-            neuron_dict[post]
-        except KeyError:
-            neuron_dict.setdefault(post, c)
-            c += 1
+        if post != "LegacyBodyWallMuscles":
+            # Save all neurons in a dict
+            try:
+                neuron_dict[pre]
+            except KeyError:
+                neuron_dict.setdefault(pre, c)
+                c += 1
+            try:
+                neuron_dict[post]
+            except KeyError:
+                neuron_dict.setdefault(post, c)
+                c += 1
     file.seek(0)
     m = np.zeros((c,c))
     for line in file:
         pre, post, stype, sn = line.split()
-        if stype == "chemical":
+        if stype == "chemical" and post != "LegacyBodyWallMuscles":
             m[neuron_dict[pre], neuron_dict[post]] = sn
     # save data
     pickle.dump(
