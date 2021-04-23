@@ -304,7 +304,7 @@ def find_representative_simplices(simplices):
     """
     Function to retrieve representative simplices.
     """
-    for row in tqdm(simplices.shape[0]):
+    for row in tqdm(range(simplices.shape[0])):
         simplices[row] = np.sort(simplices[row])
     return np.unique(simplices, axis=0)
 
