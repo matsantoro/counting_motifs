@@ -300,6 +300,35 @@ def create_maximal_simplex_file(simplex_file_path: Path, maximal_file_path: Path
     maximal_cfile.create_dataset('Cells_' + str(i+2), data=cfile[list(cfile.keys())[-1]][:])
 
 
+def find_representative_simplices(simplices):
+    """
+    Function to retrieve representative simplices.
+    """
+    for row in tqdm(simplices.shape[0]):
+        simplices[row] = np.sort(simplices[row])
+    return np.unique(simplices, axis=0)
+
+
+def create_representative_simplex_file(simplex_file_path: Path, representative_file_path: Path, overwrite: bool):
+    """Generate h5py file containing representative simplices.
+
+    :argument simplex_file_path: (Path) path of h5 file containing simplices from which to extract
+        maximal ones.
+    :argument maximal_file_path: (Path) output h5 file path.
+    :argument overwrite: (bool) whether to overwrite existing files.
+    """
+    cfile = h5py.File(simplex_file_path)
+
+    if overwrite:
+        representative_file_path.unlink(missing_ok=True)
+    maximal_cfile = h5py.File(representative_file_path, 'w')
+    for i in range(len(cfile.keys())):
+        simplices1 = cfile['Cells_' + (str(i + 1))][:]
+        new_simplices = find_representative_simplices(simplices1)
+        maximal_cfile.create_dataset('Cells_' + (str(i + 1)), data=new_simplices)
+    maximal_cfile.create_dataset('Cells_' + str(i+2), data=cfile[list(cfile.keys())[-1]][:])
+
+
 def flagser_count(in_path: Path, out_path: Path, overwrite: bool = True, maximal = False):
     """Uses flagser to build flagser count file.
 
