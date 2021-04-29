@@ -326,7 +326,6 @@ def create_representative_simplex_file(simplex_file_path: Path, representative_f
         simplices1 = cfile['Cells_' + (str(i + 1))][:]
         new_simplices = find_representative_simplices(simplices1)
         maximal_cfile.create_dataset('Cells_' + (str(i + 1)), data=new_simplices)
-    maximal_cfile.create_dataset('Cells_' + str(i+2), data=cfile[list(cfile.keys())[-1]][:])
 
 
 def flagser_count(in_path: Path, out_path: Path, overwrite: bool = True, maximal = False):
