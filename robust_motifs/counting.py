@@ -506,6 +506,31 @@ def count_bidirectional_edges(matrix: np.ndarray, count_file: h5py.File, dimensi
     return counts_per_dimension
 
 
+def count_total_bidirectional_edges(matrix: np.ndarray, count_file: h5py.File, dimension: int) -> Dict[int, int]:
+    """Function that returns bidirectional edge counts in simplices per dimension.
+
+    :argument matrix: (np.ndarray) connectivity matrix of graph.
+    :argument count_file: (h5py.File) the flagser output file.
+    :argument dimension: (int) maximum dimension to consider
+
+    :returns count_dictionary: (Dict[int, np.ndarray]) dictionary containing
+        the bidirectional edge counts in simplices per dimension
+    """
+    counts_per_dimension = {}
+    for i in range(1, dimension + 1):
+        counts_per_dimension.update({i: 0})
+    for i in range(1, dimension + 1):
+        try:
+            simplices = count_file['Cells_' + str(i)]
+            for simplex in tqdm(simplices):
+                simplex_matrix = matrix[simplex].T[simplex].T
+                counts_per_dimension[i] += np.sum(np.multiply(simplex_matrix, simplex_matrix.T))/2
+            counts_per_dimension[i] = int(counts_per_dimension[i])
+        except KeyError:
+            pass
+    return counts_per_dimension
+
+
 def count_bidirectional_edges_from_binary(matrix: np.ndarray, count_files: List[Path]):
     counts_per_dimension = {}
     for file in count_files:
@@ -536,6 +561,23 @@ def bcount_from_file(path: Path, dimension: int, binary: bool = False):
         count_file = h5py.File(path.with_name(path.stem + "-count.h5"))
         counts_per_dimension = count_bidirectional_edges(matrix, count_file, dimension)
         name = "bcounts.pkl"
+    with open(path.with_name(name), 'wb') as file:
+        pickle.dump(counts_per_dimension, file)
+
+
+def total_bcount_from_file(path: Path, dimension: int):
+    """
+    Function that generates bidirectional edge count files from a pickle/flagser output
+        combination.
+
+    :argument path: (Path) path to the .pkl file containing the sparse matrix
+    :argument dimension: (int) maximum dimension to consider.
+    """
+    matrix = load_sparse_matrix_from_pkl(path)
+    matrix = np.array(matrix.todense()).astype(bool)
+    count_file = h5py.File(path.with_name(path.stem + "-count-representative.h5"))
+    counts_per_dimension = count_total_bidirectional_edges(matrix, count_file, dimension)
+    name = "total_rbcounts.pkl"
     with open(path.with_name(name), 'wb') as file:
         pickle.dump(counts_per_dimension, file)
 
