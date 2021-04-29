@@ -506,15 +506,15 @@ def count_bidirectional_edges(matrix: np.ndarray, count_file: h5py.File, dimensi
     return counts_per_dimension
 
 
-def count_total_bidirectional_edges(matrix: np.ndarray, count_file: h5py.File, dimension: int) -> Dict[int, int]:
+def count_total_bidirectional_edges(matrix: np.ndarray, count_file: h5py.File, dimension: int) -> Dict:
     """Function that returns bidirectional edge counts in simplices per dimension.
 
     :argument matrix: (np.ndarray) connectivity matrix of graph.
     :argument count_file: (h5py.File) the flagser output file.
     :argument dimension: (int) maximum dimension to consider
 
-    :returns count_dictionary: (Dict[int, np.ndarray]) dictionary containing
-        the bidirectional edge counts in simplices per dimension
+    :returns count_dictionary: (Dict[int, Tuple(int, int)]) dictionary containing
+        dimension and relative biedge and simplex count
     """
     counts_per_dimension = {}
     for i in range(1, dimension + 1):
@@ -524,8 +524,8 @@ def count_total_bidirectional_edges(matrix: np.ndarray, count_file: h5py.File, d
             simplices = count_file['Cells_' + str(i)]
             for simplex in tqdm(simplices):
                 simplex_matrix = matrix[simplex].T[simplex].T
-                counts_per_dimension[i] += np.sum(np.multiply(simplex_matrix, simplex_matrix.T))/2
-            counts_per_dimension[i] = int(counts_per_dimension[i])
+                counts_per_dimension[i] += np.count_nonzero(np.multiply(simplex_matrix, simplex_matrix.T))
+            counts_per_dimension[i] = (int(counts_per_dimension[i]), len(simplices))
         except KeyError:
             pass
     return counts_per_dimension
